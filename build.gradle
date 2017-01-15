@@ -1,0 +1,42 @@
+apply plugin: 'findbugs'
+apply plugin: 'idea'
+apply plugin: 'java'
+apply plugin: 'maven'
+
+group 'alog'
+version '1.0.0'
+
+sourceCompatibility = 1.5
+targetCompatibility = 1.5
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+configurations {
+    provided
+}
+
+idea {
+    module {
+        scopes.PROVIDED.plus += [ configurations.provided ]
+    }
+}
+
+findbugsMain {
+    reports {
+        xml.enabled = false
+        html.enabled = true
+    }
+}
+
+
+dependencies {
+    provided 'com.google.code.findbugs:annotations:3.0.1'
+    testCompile 'junit:junit:4.12'
+}
+
+compileJava {
+    sourceSets.main.compileClasspath += configurations.provided
+}
