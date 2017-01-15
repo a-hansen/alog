@@ -3,6 +3,7 @@ Alog
 
 * Date: Jan 15, 2017
 * Version: 1.0.0
+* Author: Aaron hansen
 
 
 Overview
