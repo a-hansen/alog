@@ -9,7 +9,7 @@ Alog
 Overview
 --------
 
-An async log handler for Java Util Logging.  It uses separate threads to print
+A simple async log handler for Java Util Logging.  It uses separate threads to process
 log messages for improved application performance.
 
 The following are notable features:
@@ -47,6 +47,9 @@ import com.ca.alog.*;
 public static void main(String[] args) {
     Logger log = Alog.getLogger("myLog", new File("myLog")));
     Logger another = Alog.getLogger("anotherLog", new File("myLog")));
+    if (log.getHandlers()[0] == another.getHandlers()[0]) {
+        System.out.println("This will print.");
+    }
 }
 ```
 
@@ -57,7 +60,6 @@ import com.ca.alog.*;
 
 public static void main(String[] args) {
     Alog.replaceRootHandler();
-    Logger log = Alog.getLogger("myLog", new File("myLog")));
 }
 ```
 

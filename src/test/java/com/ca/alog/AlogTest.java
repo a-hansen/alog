@@ -65,5 +65,11 @@ public class AlogTest {
         Assert.assertTrue(backups.length == 2);
     }
 
+    @Test
+    public void test3() throws Exception {
+        Logger another = Alog.getLogger("another", new File("test.log"));
+        Assert.assertTrue(log.getHandlers()[0] == another.getHandlers()[0]);
+    }
+
 
 }
