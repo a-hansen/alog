@@ -27,8 +27,8 @@ Java 1.5 or higher is required.
 Usage
 -----
 
-Acquire logs with Alog.getLogger(). It will add a log handler only if one hasn't already
- been added.
+Acquire logs with Alog.getLogger(). It will add a log handler only if one 
+has not already been added.
 
 ```java
 import com.ca.alog.*;
@@ -62,6 +62,9 @@ public static void main(String[] args) {
     Alog.replaceRootHandler();
 }
 ```
+
+Alogger.java.txt is an example Java 8 interface worth reviewing.  It can be used as 
+efficiency convenience.
 
 History
 -------
