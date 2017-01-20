@@ -17,7 +17,7 @@ The following are notable features:
 * Async handlers for java.io.PrintStream and java.io.File.
 * Multiple logs can safely share the same file.
 * Files will be zipped up after they exceed a certain size, and the number
-  of backups will to trimmed to a maximum.
+  of backups will be trimmed to a maximum.
 
 Requirements
 ------------
@@ -63,7 +63,7 @@ public static void main(String[] args) {
 }
 ```
 
-Alogger.java.txt is an example Java 8 interface worth reviewing.  It can be used as 
+[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/ca/alog/Alogger.java.txt) is an example Java 8 interface worth reviewing.  It can be used as 
 efficiency convenience.
 
 History

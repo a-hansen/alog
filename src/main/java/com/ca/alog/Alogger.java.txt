@@ -23,11 +23,11 @@ import static java.util.logging.Level.*;
  * <p>
  * Without this interface:
  * <p>
- * <code>log.log(FINEST, log.isLoggable(FINEST) ? "complexString" : "");</code>
+ * <code>log.log(FINEST, log.isLoggable(FINEST) ? "complexString" : null);</code>
  * <p>
  * With this interface:
  * <p>
- * <code>finest(logFinest() ? "complexString" : "");</code>
+ * <code>finest(logFinest() ? "complexString" : null);</code>
  *
  * @author Aaron Hansen
  */
@@ -35,14 +35,6 @@ public interface Alogger {
 
     public default void config(String msg) {
         getLog().log(CONFIG, msg);
-    }
-
-    public default void config(String msg, Object param) {
-        getLog().log(CONFIG, msg, param);
-    }
-
-    public default void config(String msg, Object[] params) {
-        getLog().log(CONFIG, msg, params);
     }
 
     public default void config(String msg, Throwable x) {
@@ -53,14 +45,6 @@ public interface Alogger {
         getLog().log(FINE, msg);
     }
 
-    public default void fine(String msg, Object param) {
-        getLog().log(FINE, msg, param);
-    }
-
-    public default void fine(String msg, Object[] params) {
-        getLog().log(FINE, msg, params);
-    }
-
     public default void fine(String msg, Throwable x) {
         getLog().log(FINE, msg, x);
     }
@@ -69,28 +53,12 @@ public interface Alogger {
         getLog().log(FINER, msg);
     }
 
-    public default void finer(String msg, Object param) {
-        getLog().log(FINER, msg, param);
-    }
-
-    public default void finer(String msg, Object[] params) {
-        getLog().log(FINER, msg, params);
-    }
-
     public default void finer(String msg, Throwable x) {
         getLog().log(FINER, msg, x);
     }
 
     public default void finest(String msg) {
         getLog().log(FINEST, msg);
-    }
-
-    public default void finest(String msg, Object param) {
-        getLog().log(FINEST, msg, param);
-    }
-
-    public default void finest(String msg, Object[] params) {
-        getLog().log(FINEST, msg, params);
     }
 
     public default void finest(String msg, Throwable x) {
@@ -108,14 +76,6 @@ public interface Alogger {
         getLog().log(INFO, msg);
     }
 
-    public default void info(String msg, Object param) {
-        getLog().log(INFO, msg, param);
-    }
-
-    public default void info(String msg, Object[] params) {
-        getLog().log(INFO, msg, params);
-    }
-
     public default void info(String msg, Throwable x) {
         getLog().log(INFO, msg, x);
     }
@@ -124,28 +84,12 @@ public interface Alogger {
         getLog().log(SEVERE, msg);
     }
 
-    public default void severe(String msg, Object param) {
-        getLog().log(SEVERE, msg, param);
-    }
-
-    public default void severe(String msg, Object[] params) {
-        getLog().log(SEVERE, msg, params);
-    }
-
     public default void severe(String msg, Throwable x) {
         getLog().log(SEVERE, msg, x);
     }
 
     public default void warn(String msg) {
         getLog().log(WARNING, msg);
-    }
-
-    public default void warn(String msg, Object param) {
-        getLog().log(WARNING, msg, param);
-    }
-
-    public default void warn(String msg, Object[] params) {
-        getLog().log(WARNING, msg, params);
     }
 
     public default void warn(String msg, Throwable x) {
