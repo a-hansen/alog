@@ -76,5 +76,6 @@ _1.1.0 - 2017-1-29_
   - True jdk 1.5 compatibility.
   - Changed the async thread sleep/wait interval.
   - Added other logging framework benchmarks to the unit tests for comparison.
+
 _1.0.0 - 2017-1-15_
   - Hello World.
