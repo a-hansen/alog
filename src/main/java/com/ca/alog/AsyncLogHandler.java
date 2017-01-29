@@ -15,12 +15,10 @@
 package com.ca.alog;
 
 import java.io.PrintStream;
+import java.text.MessageFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
-import java.util.logging.Formatter;
-import java.util.logging.Handler;
-import java.util.logging.LogRecord;
-import java.util.logging.SimpleFormatter;
+import java.util.logging.*;
 
 /**
  * Enqueues log records which are then processed by separate thread.
@@ -39,10 +37,12 @@ public abstract class AsyncLogHandler extends Handler {
 
     private StringBuilder builder = new StringBuilder();
     private Calendar calendar = Calendar.getInstance();
-    private boolean open = false;
-    private LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
-    private PrintStream out;
     private LogHandlerThread logHandlerThread;
+    private int maxQueueSize = Alog.DEFAULT_MAX_QUEUE;
+    private boolean open = false;
+    private PrintStream out;
+    private LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
+    private int queueThrottle = (int) (Alog.DEFAULT_MAX_QUEUE * .75);
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -51,6 +51,15 @@ public abstract class AsyncLogHandler extends Handler {
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    /**
+     * The number of items on the queue.
+     */
+    public int backlog() {
+        synchronized (queue) {
+            return queue.size();
+        }
+    }
 
     /**
      * Closes the PrintStream, terminates the write thread and performs houseKeeping.
@@ -71,11 +80,15 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * One minute by default, this is a guideline more than anything else.  Housekeeping
+     * Ten seconds by default, this is a guideline more than anything else.  Housekeeping
      * can be called sooner during low activity periods.
      */
     public long getHouseKeepingIntervalNanos() {
-        return Time.NANOS_IN_MIN;
+        return Time.NANOS_IN_10SEC;
+    }
+
+    public int getMaxQueueSize() {
+        return maxQueueSize;
     }
 
     /**
@@ -105,17 +118,32 @@ public abstract class AsyncLogHandler extends Handler {
     public void publish(LogRecord record) {
         if (open) {
             synchronized (queue) {
-                queue.add(record);
-                queue.notifyAll();
+                int size = queue.size();
+                if (size < maxQueueSize) {
+                    if (size > queueThrottle) {
+                        if (record.getLevel().intValue() < Level.INFO.intValue()) {
+                            return;
+                        }
+                    }
+                    queue.addLast(record);
+                    queue.notify();
+                }
             }
         }
+    }
+
+    public AsyncLogHandler setMaxQueueSize(int maxQueueSize) {
+        this.maxQueueSize = maxQueueSize;
+        this.queueThrottle = (int) (maxQueueSize * .75);
+        return this;
     }
 
     /**
      * Sets the sink for formatted messages.
      */
-    protected void setOut(PrintStream out) {
+    protected AsyncLogHandler setOut(PrintStream out) {
         this.out = out;
+        return this;
     }
 
     /**
@@ -134,25 +162,36 @@ public abstract class AsyncLogHandler extends Handler {
      * Formats and writes the log record the underlying stream.
      */
     protected void write(LogRecord record) {
-        // severity
-        out.print(record.getLevel().getLocalizedName());
+        Formatter formatter = getFormatter();
+        if (formatter != null) {
+            out.println(formatter.formatMessage(record));
+            return;
+        }
+        // log name
+        out.print(record.getLoggerName());
         out.print(" [");
         // timestamp
         calendar.setTimeInMillis(record.getMillis());
         out.print(Time.encodeForLogs(calendar, builder).toString());
         builder.setLength(0);
-        out.print("][");
-        // log name
-        out.print(record.getLoggerName());
-        out.print("]");
+        out.print("] ");
+        // severity
+        out.print(record.getLevel().getLocalizedName());
         // message
-        Formatter formatter = getFormatter();
-        if (formatter == null) {
-            formatter = new SimpleFormatter();
-            setFormatter(formatter);
-        }
-        String msg = formatter.formatMessage(record);
-        if ((msg != null) && !msg.isEmpty()) {
+        String msg = record.getMessage();
+        if ((msg != null) && (msg.length() > 0)) {
+            if (record.getSourceClassName() != null) {
+                out.print(' ');
+                out.print(record.getSourceClassName());
+            }
+            if (record.getSourceMethodName() != null) {
+                out.print(' ');
+                out.print(record.getSourceMethodName());
+            }
+            Object[] params = record.getParameters();
+            if (params != null) {
+                msg = String.format(msg, params);
+            }
             out.print(' ');
             out.print(msg);
         }
@@ -185,20 +224,21 @@ public abstract class AsyncLogHandler extends Handler {
                     emptyQueue = queue.isEmpty();
                     if (emptyQueue) {
                         try {
-                            queue.wait(5000);
+                            queue.wait(2000);
                         } catch (Exception ignore) {
                         }
                         emptyQueue = queue.isEmpty(); //housekeeping opportunity flag
                     } else {
-                        record = queue.remove(0);
+                        record = queue.removeFirst();
                     }
                 }
                 if (open) {
                     if (record != null) {
                         write(record);
                         Thread.yield();
-                    } else if (emptyQueue) {
-                        //potential housekeeping opportunity
+                    }
+                    if (emptyQueue) {
+                        //housekeeping opportunity
                         now = System.nanoTime();
                         long min = getHouseKeepingIntervalNanos() / 2;
                         if ((now - lastHouseKeeping) > min) {
@@ -206,12 +246,13 @@ public abstract class AsyncLogHandler extends Handler {
                             houseKeeping();
                             lastHouseKeeping = System.nanoTime();
                         }
-                    }
-                    now = System.nanoTime();
-                    if ((now - lastHouseKeeping) > getHouseKeepingIntervalNanos()) {
-                        flush();
-                        houseKeeping();
-                        lastHouseKeeping = System.nanoTime();
+                    } else {
+                        now = System.nanoTime();
+                        if ((now - lastHouseKeeping) > getHouseKeepingIntervalNanos()) {
+                            flush();
+                            houseKeeping();
+                            lastHouseKeeping = System.nanoTime();
+                        }
                     }
                 }
             }

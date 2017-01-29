@@ -1,8 +1,8 @@
 Alog
 ====
 
-* Date: Jan 15, 2017
-* Version: 1.0.0
+* Date: Jan 29, 2017
+* Version: 1.1.0
 * Author: Aaron hansen
 
 
@@ -14,10 +14,11 @@ log messages for improved application performance.
 
 The following are notable features:
 
+* Fast, minimal application interference.
 * Async handlers for java.io.PrintStream and java.io.File.
+* Files will be zipped after they exceed a certain size, and the number of zip backups 
+  will be trimmed to a maximum.
 * Multiple logs can safely share the same file.
-* Files will be zipped up after they exceed a certain size, and the number
-  of backups will be trimmed to a maximum.
 
 Requirements
 ------------
@@ -27,7 +28,7 @@ Java 1.5 or higher is required.
 Usage
 -----
 
-Acquire logs with Alog.getLogger(). It will add a log handler only if one 
+Initially acquire logs with Alog.getLogger(). It will add a log handler only if one 
 has not already been added.
 
 ```java
@@ -63,10 +64,17 @@ public static void main(String[] args) {
 }
 ```
 
-[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/ca/alog/Alogger.java.txt) is an example Java 8 interface worth reviewing.  It can be used as 
-efficiency convenience.
+[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/ca/alog/Alogger.java.txt) 
+is an example Java 8 interface that can be used as an efficiency and convenience.
 
 History
 -------
+_1.1.0 - 2017-1-29_
+  - Formatting fixes / changes.
+  - Added a max queue size.
+  - If the queue is 75% full, records less than INFO will be discarded.
+  - True jdk 1.5 compatibility.
+  - Changed the async thread sleep/wait interval.
+  - Added other logging framework benchmarks to the unit tests for comparison.
 _1.0.0 - 2017-1-15_
   - Hello World.

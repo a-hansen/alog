@@ -30,9 +30,7 @@ class Time {
 
     public static final long NANOS_IN_MS = 1000000;
     public static final long NANOS_IN_SEC = 1000 * NANOS_IN_MS;
-    public static final long NANOS_IN_MIN = 60 * NANOS_IN_SEC;
-
-    public static final int MS_IN_MIN = 60 * 1000;
+    public static final long NANOS_IN_10SEC = 10 * NANOS_IN_SEC;
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields

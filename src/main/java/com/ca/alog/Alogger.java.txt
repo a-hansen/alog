@@ -19,15 +19,17 @@ import static java.util.logging.Level.*;
 
 /**
  * Logging convenience, enables shorter statements using ternary expressions for
- * efficiency.  Requires Java 8 or later.
+ * efficiency.  Method getLog() should be overridden.  Requires Java 8 or later.
  * <p>
  * Without this interface:
  * <p>
- * <code>log.log(FINEST, log.isLoggable(FINEST) ? "complexString" : null);</code>
+ * <code>if (log.isLoggable(FINEST)) log.log(FINEST, complexString());</code>
+ * <p>Or,<p>
+ * <code>log.log(FINEST, log.isLoggable(FINEST) ? complexString() : null);</code>
  * <p>
  * With this interface:
  * <p>
- * <code>finest(logFinest() ? "complexString" : null);</code>
+ * <code>finest(logFinest() ? complexString() : null);</code>
  *
  * @author Aaron Hansen
  */

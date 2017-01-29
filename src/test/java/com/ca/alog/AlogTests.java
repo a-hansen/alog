@@ -23,7 +23,7 @@ import org.junit.Test;
 /**
  * @author Aaron Hansen
  */
-public class AlogTest {
+public class AlogTests {
 
     static Logger log;
 
@@ -34,13 +34,13 @@ public class AlogTest {
     }
 
     private void aMethod() {
-        log.entering("AlogTest", "aMethod");
-        log.exiting("AlogTest", "aMethod");
+        log.entering("AlogTests", "aMethod");
+        log.exiting("AlogTests", "aMethod");
     }
 
     @Test
     public void test1() throws Exception {
-        Logger.getGlobal().info("My first log");
+        Logger.getLogger("").info("My first log");
         log.info("My second log");
         aMethod();
     }

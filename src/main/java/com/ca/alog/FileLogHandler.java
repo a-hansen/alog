@@ -83,11 +83,13 @@ public class FileLogHandler extends AsyncLogHandler {
     public File[] getBackups() {
         File dir = file.getAbsoluteFile().getParentFile();
         File[] backups = dir.listFiles(new FilenameFilter() {
-            @Override
             public boolean accept(File dir, String name) {
                 return name.endsWith(".zip") && name.startsWith(file.getName());
             }
         });
+        if (backups == null) {
+            return new File[0];
+        }
         Arrays.sort(backups);
         return backups;
     }
@@ -145,20 +147,20 @@ public class FileLogHandler extends AsyncLogHandler {
                     len = in.read(bytes);
                 }
             } catch (Exception x) {
-                Logger.getGlobal().log(Level.SEVERE, "Log backup error", x);
+                Logger.getLogger("").log(Level.SEVERE, "Log backup error", x);
             }
             if (zip != null) {
                 try {
                     zip.close();
                 } catch (Exception x) {
-                    Logger.getGlobal().log(Level.FINEST, "Log backup error", x);
+                    Logger.getLogger("").log(Level.FINEST, "Log backup error", x);
                 }
             }
             if (in != null) {
                 try {
                     in.close();
                 } catch (Exception x) {
-                    Logger.getGlobal().log(Level.FINEST, "Log backup error", x);
+                    Logger.getLogger("").log(Level.FINEST, "Log backup error", x);
                 }
             }
         }
@@ -231,7 +233,7 @@ public class FileLogHandler extends AsyncLogHandler {
         try {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         } catch (Throwable x) {
-            Logger.getGlobal().log(Level.WARNING,
+            Logger.getLogger("").log(Level.WARNING,
                                    "FileLogHandler: Unable to add shutdown hook", x);
         }
     }

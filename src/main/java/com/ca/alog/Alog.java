@@ -34,12 +34,17 @@ public class Alog {
     /**
      * This is the threshold, not a hard limit: 10 megs by default.
      */
-    public static int DEFAULT_BACKUP_THRESHOLD = 10485760; //10megs
+    public static int DEFAULT_BACKUP_THRESHOLD = 10485760;
 
     /**
      * The default number of backups to retain: 10 by default.
      */
     public static int DEFAULT_MAX_BACKUPS = 10;
+
+    /**
+     * Max async queue size: 500K by default.
+     */
+    public static int DEFAULT_MAX_QUEUE = 500000;
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -59,6 +64,8 @@ public class Alog {
 
     /**
      * Adds a FileLogHandler to the named logger, if there isn't one already.
+     * This can be used repeatedly to acquire the same logger, but doing so would be
+     * inefficient.  Use Logger.getLogger after this has installed the handler.
      *
      * @param name    Log name.
      * @param logFile Where record the log, may be null.  Multiple logs can safely share
@@ -78,6 +85,8 @@ public class Alog {
 
     /**
      * Adds a PrintStreamLogHandler to the named logger, if there isn't one already.
+     * This can be used repeatedly to acquire the same logger, but doing so would be
+     * inefficient.  Use Logger.getLogger after this has installed the handler.
      *
      * @param name Log name.
      * @param out  Where to print the log.
@@ -110,7 +119,7 @@ public class Alog {
 
     /**
      * Removes existing handlers from the root logger and installs a
-     * FileLogHandler for System.out.
+     * FileLogHandler.
      */
     public static void replaceRootHandler(File logFile) {
         Logger global = Logger.getLogger("");
