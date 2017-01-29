@@ -9,8 +9,8 @@ Alog
 Overview
 --------
 
-A simple async log handler for Java Util Logging.  It uses separate threads to process
-log messages for improved application performance.
+A simple asynchronous log handler for JUL (Java Util Logging).  It uses separate threads 
+to process log messages for improved application performance.
 
 The following are notable features:
 
@@ -66,6 +66,13 @@ public static void main(String[] args) {
 
 [Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/ca/alog/Alogger.java.txt) 
 is an example Java 8 interface that can be used as an efficiency and convenience.
+
+Benchmarks
+----------
+
+Unit testing includes benchmarks for comparing async versions of JUL, Log4j and 
+SLF4J (with Logback).
+
 
 History
 -------
