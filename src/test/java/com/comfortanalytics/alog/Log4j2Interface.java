@@ -14,16 +14,18 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
-import java.io.PrintStream;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.LoggerContext;
 
 /**
- * Async log handler for writing to streams such as System.out.
+ * Log4j configured for async.
  *
  * @author Aaron Hansen
  */
-public class PrintStreamLogHandler extends AsyncLogHandler {
+public class Log4j2Interface implements BenchmarkInterface {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -33,25 +35,41 @@ public class PrintStreamLogHandler extends AsyncLogHandler {
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private String name;
+    private Logger log;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public PrintStreamLogHandler(String name, PrintStream out) {
-        this.name = name;
-        setOut(out);
-        start();
+    public Log4j2Interface() {
+        System.setProperty(
+                "Log4jContextSelector",
+                "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
+        LoggerContext context = LoggerContext.getContext();
+        log = context.getLogger("Log4j2");
+        log.setAdditive(false);
+        log.setLevel(Level.ALL);
+        AlogBenchmark.out.println("Log4j2 class: " + log.getClass().getName());
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    @Override
-    public String getThreadName() {
-        return name;
+    public void log(String message) {
+        log.info(message);
+    }
+
+    public void log(String message, Throwable ex) {
+        log.log(Level.INFO, message, ex);
+    }
+
+    public void log(String message, Object param) {
+        log.log(Level.INFO, message, param);
+    }
+
+    public String toString() {
+        return "Log4j2";
     }
 
     ///////////////////////////////////////////////////////////////////////////

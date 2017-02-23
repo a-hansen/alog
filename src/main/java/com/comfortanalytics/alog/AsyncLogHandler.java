@@ -14,10 +14,9 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
 import java.io.PrintStream;
-import java.text.MessageFormat;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.logging.*;

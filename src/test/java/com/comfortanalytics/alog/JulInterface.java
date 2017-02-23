@@ -14,20 +14,17 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
-import org.slf4j.LoggerFactory;
-import ch.qos.logback.classic.AsyncAppender;
-import ch.qos.logback.classic.Logger;
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- * SLF4J with Logback.
+ * Non-Async vanilla Java Util Logging.
  *
  * @author Aaron Hansen
  */
-public class Slf4jInterface implements BenchmarkInterface {
+public class JulInterface implements BenchmarkInterface {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -43,15 +40,13 @@ public class Slf4jInterface implements BenchmarkInterface {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public Slf4jInterface() {
-        log = (Logger) LoggerFactory.getLogger("Slf4j");
-        log.detachAndStopAllAppenders();
-        AsyncAppender async = new AsyncAppender();
-        async.addAppender(new ConsoleAppender<ILoggingEvent>());
-        async.start();
-        log.addAppender(async);
-        log.setAdditive(false);
-        AlogBenchmark.out.println("Slf4j class: " + log.getClass().getName());
+    public JulInterface() {
+        log = Logger.getLogger("Jul-notAysnc");
+        log.setLevel(Level.ALL);
+        log.setUseParentHandlers(false);
+        AlogBenchmark.out.println("JUL class: " + log.getClass().getName());
+        AlogBenchmark.out.println("JUL benchmark is not async, but notice how fast it " +
+                                          "is with the null console.");
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -63,15 +58,15 @@ public class Slf4jInterface implements BenchmarkInterface {
     }
 
     public void log(String message, Throwable ex) {
-        log.info(message, ex);
+        log.log(Level.INFO, message, ex);
     }
 
     public void log(String message, Object param) {
-        log.info(message, param);
+        log.log(Level.INFO, message, param);
     }
 
     public String toString() {
-        return "Slf4j";
+        return "Jul";
     }
 
     ///////////////////////////////////////////////////////////////////////////
