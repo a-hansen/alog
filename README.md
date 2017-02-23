@@ -3,7 +3,6 @@ Alog
 
 * Date: Jan 29, 2017
 * Version: 1.1.0
-* Author: Aaron hansen
 * [Javadocs](https://a-hansen.github.io/alog/)
 
 
