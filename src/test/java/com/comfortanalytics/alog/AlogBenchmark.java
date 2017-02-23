@@ -14,7 +14,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
 import java.io.OutputStream;
 import java.io.PrintStream;

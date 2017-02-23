@@ -14,17 +14,15 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Non-Async vanilla Java Util Logging.
- *
  * @author Aaron Hansen
  */
-public class JulInterface implements BenchmarkInterface {
+public class AlogInterface implements BenchmarkInterface {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -40,13 +38,11 @@ public class JulInterface implements BenchmarkInterface {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public JulInterface() {
-        log = Logger.getLogger("Jul");
+    public AlogInterface() {
+        Alog.replaceRootHandler();
+        log = Logger.getLogger("Alog");
         log.setLevel(Level.ALL);
-        log.setUseParentHandlers(false);
-        AlogBenchmark.out.println("JUL class: " + log.getClass().getName());
-        AlogBenchmark.out.println("JUL benchmark is not async, but notice how fast it " +
-                                          "is with the null console.");
+        AlogBenchmark.out.println("Alog class: " + log.getClass().getName());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -66,7 +62,7 @@ public class JulInterface implements BenchmarkInterface {
     }
 
     public String toString() {
-        return "Jul";
+        return "Alog";
     }
 
     ///////////////////////////////////////////////////////////////////////////

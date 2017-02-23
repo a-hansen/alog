@@ -1,8 +1,8 @@
 Alog
 ====
 
-* Date: Jan 29, 2017
-* Version: 1.1.0
+* Date: Feb 23, 2017
+* Version: 2.0.0
 * [Javadocs](https://a-hansen.github.io/alog/)
 
 
@@ -10,15 +10,16 @@ Overview
 --------
 
 A simple asynchronous log handler for JUL (Java Util Logging).  It uses separate threads 
-to process log messages for improved application performance.
+to process log messages for low latency logging.
 
 The following are notable features:
 
-* Fast, minimal application interference.
+* Fast.  Minimum application interference.
 * Async handlers for java.io.PrintStream and java.io.File.
 * Files will be zipped after they exceed a certain size, and the number of zip backups 
   will be trimmed to a maximum.
 * Multiple logs can safely share the same file.
+* Extremely permissive [license](https://en.wikipedia.org/wiki/ISC_license).
 
 Requirements
 ------------
@@ -65,17 +66,20 @@ public static void main(String[] args) {
 ```
 
 [Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/ca/alog/Alogger.java.txt) 
-is an example Java 8 interface that can be used as an efficiency and convenience.
+is an example Java 8 interface that can be used for efficiency and convenience.
 
 Benchmarks
 ----------
 
-Unit testing includes benchmarks for comparing async versions of JUL, Log4j and 
+Tests include a simple benchmark for comparing this with async versions of Log4j and 
 SLF4J (with Logback).
 
 
 History
 -------
+_2.0.0 - 2017-2-23_
+  - Package change.
+  
 _1.1.0 - 2017-1-29_
   - Formatting fixes / changes.
   - Added a max queue size.

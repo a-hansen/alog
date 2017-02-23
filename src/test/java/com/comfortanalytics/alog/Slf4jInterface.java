@@ -14,15 +14,20 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.LoggerFactory;
+import ch.qos.logback.classic.AsyncAppender;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.ConsoleAppender;
 
 /**
+ * SLF4J with Logback.
+ *
  * @author Aaron Hansen
  */
-public class AlogInterface implements BenchmarkInterface {
+public class Slf4jInterface implements BenchmarkInterface {
 
     ///////////////////////////////////////////////////////////////////////////
     // Constants
@@ -38,11 +43,15 @@ public class AlogInterface implements BenchmarkInterface {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    public AlogInterface() {
-        Alog.replaceRootHandler();
-        log = Logger.getLogger("Alog");
-        log.setLevel(Level.ALL);
-        AlogBenchmark.out.println("Alog class: " + log.getClass().getName());
+    public Slf4jInterface() {
+        log = (Logger) LoggerFactory.getLogger("Slf4j");
+        log.detachAndStopAllAppenders();
+        AsyncAppender async = new AsyncAppender();
+        async.addAppender(new ConsoleAppender<ILoggingEvent>());
+        async.start();
+        log.addAppender(async);
+        log.setAdditive(false);
+        AlogBenchmark.out.println("Slf4j class: " + log.getClass().getName());
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -54,15 +63,15 @@ public class AlogInterface implements BenchmarkInterface {
     }
 
     public void log(String message, Throwable ex) {
-        log.log(Level.INFO, message, ex);
+        log.info(message, ex);
     }
 
     public void log(String message, Object param) {
-        log.log(Level.INFO, message, param);
+        log.info(message, param);
     }
 
     public String toString() {
-        return "Alog";
+        return "Slf4j";
     }
 
     ///////////////////////////////////////////////////////////////////////////

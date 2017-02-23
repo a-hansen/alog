@@ -48,5 +48,5 @@
  *
  * @author Aaron Hansen
  */
-package com.ca.alog;
+package com.comfortanalytics.alog;
 

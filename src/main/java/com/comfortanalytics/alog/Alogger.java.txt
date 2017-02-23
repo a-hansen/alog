@@ -14,7 +14,7 @@
  * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-package com.ca.alog;
+package com.comfortanalytics.alog;
 
 import java.util.logging.Logger;
 import static java.util.logging.Level.*;
@@ -128,4 +128,4 @@ public interface Alogger {
         return getLog().isLoggable(WARNING);
     }
 
-} //class
+}
