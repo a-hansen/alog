@@ -71,7 +71,7 @@ public static void main(String[] args) {
 }
 ```
 
-[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com.comfortanalytics/alog/Alogger.java.txt) 
+[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/comfortanalytics/alog/Alogger.java.txt) 
 is a Java 8 interface that could be used for efficiency and convenience.
 
 Performance
