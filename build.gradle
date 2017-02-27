@@ -4,7 +4,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group 'alog'
-version '2.0.0'
+version '2.0.1'
 
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
@@ -45,4 +45,14 @@ dependencies {
 
 compileJava {
     sourceSets.main.compileClasspath += configurations.provided
+}
+
+task benchmark(type: Test) {
+    testLogging.showStandardStreams = true
+    outputs.upToDateWhen {
+        false
+    }
+    filter {
+        includeTestsMatching "com.comfortanalytics.alog.AlogBenchmark"
+    }
 }
