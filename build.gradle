@@ -1,10 +1,8 @@
-apply plugin: 'findbugs'
-apply plugin: 'idea'
 apply plugin: 'java'
 apply plugin: 'maven'
 
 group 'alog'
-version '2.0.1'
+version '2.0.2'
 
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
@@ -14,26 +12,7 @@ repositories {
     mavenCentral()
 }
 
-configurations {
-    provided
-}
-
-idea {
-    module {
-        scopes.PROVIDED.plus += [ configurations.provided ]
-    }
-}
-
-findbugsMain {
-    reports {
-        xml.enabled = false
-        html.enabled = true
-    }
-}
-
-
 dependencies {
-    provided 'com.google.code.findbugs:annotations:3.0.1'
     testCompile 'ch.qos.logback:logback-classic:1.1.9'
     testCompile 'ch.qos.logback:logback-core:1.1.9'
     testCompile 'com.lmax:disruptor:3.2.0'
@@ -41,10 +20,6 @@ dependencies {
     testCompile 'org.apache.logging.log4j:log4j-core:2.7'
     testCompile 'org.slf4j:slf4j-api:1.7.22'
     testCompile 'junit:junit:4.12'
-}
-
-compileJava {
-    sourceSets.main.compileClasspath += configurations.provided
 }
 
 task benchmark(type: Test) {

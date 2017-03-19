@@ -1,7 +1,7 @@
 Alog
 ====
 
-* Version: 2.0.1
+* Version: 2.0.2
 * JDK 1.5+
 * [ISC License](https://en.wikipedia.org/wiki/ISC_license)
 * [Javadoc](https://a-hansen.github.io/alog/)
@@ -96,6 +96,9 @@ output.  Just run all tests, or AlogBenchmark specifically.
 
 History
 -------
+_2.0.2_
+  - Removed idea and findbugs from the gradle script.
+  
 _2.0.1_
   - Benchmark rework.
   - Added the gradle wrapper.
