@@ -68,13 +68,6 @@ public class AlogBenchmark {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * For the parameter test.
-     * public static String getString() {
-     * return String.valueOf(System.currentTimeMillis());
-     * }
-     */
-
     @Test
     public void run() throws Exception {
         //Add more iterations, forks, etc, results should be similar or better.  At least they
