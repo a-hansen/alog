@@ -103,8 +103,8 @@ There are 9 benchmarks and it'll take about a minute to run them all.  I trimmed
 configuration to finish a quickly as possible for the casual observer.  Adding more iterations, 
 threads, forks, or whatever shouldn't really change anything.
 
-Don't run the benchmark gradle task from within your IDE, it'll double print the output.  
-Run AlogBenchmark specifically.
+Don't run the benchmark gradle task from within your IDE, it'll double print the output.  Run 
+AlogBenchmark specifically.
 
 
 History
