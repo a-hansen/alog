@@ -19,11 +19,25 @@ package com.comfortanalytics.alog;
 import java.io.File;
 import java.io.PrintStream;
 import java.util.logging.Handler;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
  * Acquire loggers here.  Multiple logs may share the same file, there will be a
  * single file handler per absolute file path and it is thread safe.
+ * <p>
+ * java.util.logging.LogManager.getProperty(String) will be used for the following default
+ * settings:
+ * <ul>
+ * <li>com.comfortanalytics.alog.backupThreshold - The threshold file size after which the
+ * file will be zipped into a backup and a new log file will be started; 10 mb by default.
+ * <li>com.comfortanalytics.alog.maxBackups - The default number of backups to retain; 10
+ * by default.
+ * <li>com.comfortanalytics.alog.maxQueue - Max async queue size after which records will
+ * be ignored; 250K by default.
+ * <li>com.comfortanalytics.alog.throttle - Percentage (0-100) of the max queue after which
+ * log records less than INFO are ignored; 90 by default.
+ * </ul>
  *
  * @author Aaron Hansen
  */
@@ -34,19 +48,26 @@ public class Alog {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * This is the threshold, not a hard limit: 10 megs by default.
+     * The threshold file size after which the file will be zipped into a backup and a new
+     * log file will be started; 10 mb by default.
      */
-    public static int DEFAULT_BACKUP_THRESHOLD = 10485760;
+    public static int DEFAULT_BACKUP_THRESHOLD = 1024 * 10;
 
     /**
-     * The default number of backups to retain: 10 by default.
+     * The default number of backups to retain; 10 by default.
      */
     public static int DEFAULT_MAX_BACKUPS = 10;
 
     /**
-     * Max async queue size: 500K by default.
+     * Max async queue size after which records will be ignored; 25K by default.
      */
-    public static int DEFAULT_MAX_QUEUE = 500000;
+    public static int DEFAULT_MAX_QUEUE = 25000;
+
+    /**
+     * Percentage (0-100) of the max queue after which log records less than
+     * INFO are ignored; 90 by default.
+     */
+    public static int DEFAULT_THROTTLE = 90;
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -69,9 +90,9 @@ public class Alog {
      * This can be used repeatedly to acquire the same logger, but doing so would be
      * inefficient.  Use Logger.getLogger after this has installed the handler.
      *
-     * @param name    Log name.
-     * @param logFile Where record the log, may be null.  Multiple logs can safely share
-     *                the same file.
+     * @param name Log name.
+     * @param logFile Where record the log, may be null.  Multiple logs can safely share the same
+     * file.
      */
     public static Logger getLogger(String name, File logFile) {
         Logger ret = Logger.getLogger(name);
@@ -91,7 +112,7 @@ public class Alog {
      * inefficient.  Use Logger.getLogger after this has installed the handler.
      *
      * @param name Log name.
-     * @param out  Where to print the log.
+     * @param out Where to print the log.
      */
     public static Logger getLogger(String name, PrintStream out) {
         Logger ret = Logger.getLogger(name);
@@ -105,6 +126,46 @@ public class Alog {
         }
         ret.addHandler(new PrintStreamLogHandler(name, out));
         return ret;
+    }
+
+    /**
+     * Loads default settings from the LogManager properties.
+     */
+    static void loadDefaults() {
+        Logger log = Logger.getLogger(Alog.class.getName());
+        LogManager logManager = LogManager.getLogManager();
+        String str = logManager.getProperty("com.comfortanalytics.alog.backupThreshold");
+        if (str != null) {
+            try {
+                DEFAULT_BACKUP_THRESHOLD = Integer.parseInt(str);
+            } catch (Exception x) {
+                log.severe("Parse error com.comfortanaltyics.alog.backupThreshold = " + str);
+            }
+        }
+        str = logManager.getProperty("com.comfortanalytics.alog.maxBackups");
+        if (str != null) {
+            try {
+                DEFAULT_MAX_BACKUPS = Integer.parseInt(str);
+            } catch (Exception x) {
+                log.severe("Parse error com.comfortanaltyics.alog.maxBackups = " + str);
+            }
+        }
+        str = logManager.getProperty("com.comfortanalytics.alog.maxQueue");
+        if (str != null) {
+            try {
+                DEFAULT_MAX_QUEUE = Integer.parseInt(str);
+            } catch (Exception x) {
+                log.severe("Parse error com.comfortanaltyics.alog.maxQueue = " + str);
+            }
+        }
+        str = logManager.getProperty("com.comfortanalytics.alog.throttle");
+        if (str != null) {
+            try {
+                DEFAULT_THROTTLE = Integer.parseInt(str);
+            } catch (Exception x) {
+                log.severe("Parse error com.comfortanaltyics.alog.throttle = " + str);
+            }
+        }
     }
 
     /**
@@ -139,5 +200,9 @@ public class Alog {
     ///////////////////////////////////////////////////////////////////////////
     // Initialization
     ///////////////////////////////////////////////////////////////////////////
+
+    static {
+        loadDefaults();
+    }
 
 } //class

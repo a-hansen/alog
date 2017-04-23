@@ -16,8 +16,11 @@
 
 package com.comfortanalytics.alog;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import org.junit.Assert;
 import org.junit.Test;
@@ -65,12 +68,25 @@ public class AlogTests {
         handler.trimBackups();
         File[] backups = handler.getBackups();
         Assert.assertTrue(backups.length == 2);
+        for (File file : backups) {
+            file.delete();
+        }
     }
 
     @Test
     public void test3() throws Exception {
         Logger another = Alog.getLogger("another", new File("test.log"));
         Assert.assertTrue(log.getHandlers()[0] == another.getHandlers()[0]);
+    }
+
+    @Test
+    public void test4() throws Exception {
+        System.setProperty("com.comfortanalytics.alog.maxQueue", "12345");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.getProperties().store(out, null);
+        LogManager.getLogManager().readConfiguration(new ByteArrayInputStream(out.toByteArray()));
+        Alog.loadDefaults();
+        Assert.assertTrue(Alog.DEFAULT_MAX_QUEUE == 12345);
     }
 
 
