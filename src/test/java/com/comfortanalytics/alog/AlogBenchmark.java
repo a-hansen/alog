@@ -16,18 +16,34 @@
 
 package com.comfortanalytics.alog;
 
-import java.io.OutputStream;
-import java.io.PrintStream;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.Logger;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.junit.Test;
-import org.slf4j.LoggerFactory;
 import ch.qos.logback.classic.AsyncAppender;
 import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.OutputStreamAppender;
+import java.io.OutputStream;
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.SimpleFormatter;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.junit.Test;
+import org.openjdk.jmh.annotations.Benchmark;
+import org.openjdk.jmh.annotations.Level;
+import org.openjdk.jmh.annotations.Mode;
+import org.openjdk.jmh.annotations.Scope;
+import org.openjdk.jmh.annotations.Setup;
+import org.openjdk.jmh.annotations.State;
+import org.openjdk.jmh.annotations.TearDown;
+import org.openjdk.jmh.runner.Runner;
+import org.openjdk.jmh.runner.options.Options;
+import org.openjdk.jmh.runner.options.OptionsBuilder;
+import org.slf4j.LoggerFactory;
 
 /**
+ * Benchmarks how much time applications spend submitting log records to various async
+ * log handlers.
+ *
  * @author Aaron Hansen
  */
 public class AlogBenchmark {
@@ -36,13 +52,13 @@ public class AlogBenchmark {
     // Constants
     ///////////////////////////////////////////////////////////////////////////
 
-    public static int ITERATIONS = 50000;
-
     ///////////////////////////////////////////////////////////////////////////
     // Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    public static PrintStream out;
+    static int counter; //used to monitor the Logback queue size
+    static Exception exception = new Exception();
+    static UUID param = UUID.randomUUID();
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -52,169 +68,118 @@ public class AlogBenchmark {
     // Methods
     ///////////////////////////////////////////////////////////////////////////
 
-    private void printField(Object obj, int len) {
-        String str = obj.toString();
-        for (int i = len - str.length(); --i >= 0; ) {
-            out.print(' ');
-        }
-        out.print(str);
-    }
-
-    private void printResults(BenchmarkInterface target,
-                              long exception,
-                              long param,
-                              long simple,
-                              long total) {
-        printField(target, 10);
-        out.print(", Exception:");
-        printField(exception + "ms", 7);
-        out.print(", Param:");
-        printField(param + "ms", 7);
-        out.print(", Simple:");
-        printField(simple + "ms", 7);
-        out.print(", TOTAL:");
-        printField(total + "ms", 8);
-        out.println();
-    }
+    /**
+     * For the parameter test.
+     * public static String getString() {
+     * return String.valueOf(System.currentTimeMillis());
+     * }
+     */
 
     @Test
-    public void run() {
-        out = System.out;
-        out.println();
-        out.println("Configuring benchmark");
-        out.println("Replacing System.out with a null stream.");
-        System.setOut(new PrintStream(new NullOutputStream()));
-        BenchmarkInterface alog = new AlogInterface();
-        BenchmarkInterface log4j2 = new Log4j2Interface();
-        BenchmarkInterface slf4j = new Slf4jInterface();
-        out.println();
-        out.println("Warming up benchmark");
-        run(alog, false);
-        printField(alog,10);
-        out.println(" complete.");
-        run(log4j2, false);
-        printField(log4j2,10);
-        out.println(" complete.");
-        run(slf4j, false);
-        printField(slf4j,10);
-        out.println(" complete.");
-        out.println("Begin benchmark");
-        run(alog, true);
-        run(log4j2, true);
-        run(slf4j, true);
-        out.println("End benchmark");
-        System.setOut(out);
-    }
-
-    public void run(BenchmarkInterface logger, boolean print) {
-        long start = System.currentTimeMillis();
-        long exception = runException(logger, ITERATIONS);
-        long param = runParam(logger, ITERATIONS);
-        long simple = runSimple(logger, ITERATIONS);
-        long total = System.currentTimeMillis() - start;
-        if (print) {
-            printResults(logger, exception, param, simple, total);
-        }
-    }
-
-    public static long runException(BenchmarkInterface logger, int count) {
-        long start = System.currentTimeMillis();
-        Exception x = new Exception();
-        for (int i = 0; i < count; i++) {
-            logger.log("Exception " + i, x);
-        }
-        return System.currentTimeMillis() - start;
-    }
-
-    public static long runParam(BenchmarkInterface logger, int count) {
-        long start = System.currentTimeMillis();
-        Exception x = new Exception();
-        for (int i = 0; i < count; i++) {
-            logger.log("Param %d", i);
-        }
-        return System.currentTimeMillis() - start;
-    }
-
-    public static long runSimple(BenchmarkInterface logger, int count) {
-        long start = System.currentTimeMillis();
-        for (int i = 0; i < count; i++) {
-            logger.log("Simple " + i);
-        }
-        return System.currentTimeMillis() - start;
+    public void run() throws Exception {
+        //Add more iterations, forks, etc, results should be similar or better.  At least they
+        //were on my machine.
+        Options opt = new OptionsBuilder()
+                .include(this.getClass().getName() + ".*")
+                //.mode(Mode.Throughput)
+                .mode(Mode.AverageTime)
+                .timeUnit(TimeUnit.MICROSECONDS)
+                .warmupIterations(5)
+                .measurementIterations(5)
+                .forks(1)
+                .threads(10)
+                .shouldDoGC(true)
+                .jvmArgs("")
+                .build();
+        new Runner(opt).run();
     }
 
     ///////////////////////////////////////////////////////////////////////////
     // Inner Classes
     ///////////////////////////////////////////////////////////////////////////
 
-    static class AlogInterface implements BenchmarkInterface {
+    @State(Scope.Benchmark)
+    public static class Alog {
 
         private java.util.logging.Logger log;
 
-        public AlogInterface() {
-            Alog.replaceRootHandler();
-            log = java.util.logging.Logger.getLogger("Alog");
-            log.setLevel(java.util.logging.Level.ALL);
-            AlogBenchmark.out.println("Alog class: " + log.getClass().getName());
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.severe("Simple Message");
         }
 
-        public void log(String message) {
-            log.info(message);
+        @Benchmark
+        public void exception() {
+            counter++;
+            log.log(java.util.logging.Level.SEVERE, "Message", exception);
         }
 
-        public void log(String message, Throwable ex) {
-            log.log(java.util.logging.Level.INFO, message, ex);
+        @Benchmark
+        public void parameter() {
+            counter++;
+            log.log(java.util.logging.Level.SEVERE, "Parameter {0}", param);
         }
 
-        public void log(String message, Object param) {
-            log.log(java.util.logging.Level.INFO, message, param);
+        @Setup(Level.Iteration)
+        public void start() {
+            counter = 0;
+            if (log == null) {
+                com.comfortanalytics.alog.Alog.DEFAULT_MAX_QUEUE = -1; //ignore no messages
+                log = com.comfortanalytics.alog.Alog.getLogger(
+                        "Alog", new PrintStream(new NullOutputStream()));
+                log.getHandlers()[0].setFormatter(new SimpleFormatter());
+                log.setUseParentHandlers(false);
+            }
         }
 
-        public String toString() {
-            return "Alog";
+        @TearDown(Level.Iteration)
+        public void stop() {
+            //We're NOT testing the time it take to process the log record, only how much
+            //time an application spends submitting them.
+            ((AsyncLogHandler) log.getHandlers()[0]).clearBacklog();
         }
-
     }
 
-    public interface BenchmarkInterface {
+    @State(Scope.Benchmark)
+    public static class Log4j2 {
 
-        public void log(String message);
+        private org.apache.logging.log4j.core.Logger log;
 
-        public void log(String message, Throwable ex);
-
-        public void log(String message, Object param);
-
-    }
-
-    static class Log4j2Interface implements BenchmarkInterface {
-
-        private Logger log;
-
-        public Log4j2Interface() {
-            System.setProperty(
-                    "Log4jContextSelector",
-                    "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
-            LoggerContext context = LoggerContext.getContext();
-            log = context.getLogger("Log4j2");
-            log.setAdditive(false);
-            log.setLevel(Level.ALL);
-            AlogBenchmark.out.println("Log4j2 class: " + log.getClass().getName());
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.error("Simple Message");
         }
 
-        public void log(String message) {
-            log.info(message);
+        @Benchmark
+        public void exception() {
+            counter++;
+            log.error("Message", exception);
         }
 
-        public void log(String message, Throwable ex) {
-            log.log(Level.INFO, message, ex);
+        @Benchmark
+        public void parameter() {
+            counter++;
+            log.error("Parameter {}", param);
         }
 
-        public void log(String message, Object param) {
-            log.log(Level.INFO, message, param);
-        }
-
-        public String toString() {
-            return "Log4j2";
+        @Setup
+        public void start() {
+            counter = 0;
+            if (log == null) {
+                System.setProperty(
+                        "Log4jContextSelector",
+                        "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
+                LoggerContext context = LoggerContext.getContext();
+                log = context.getLogger("Log4j2");
+                log.setAdditive(false);
+                ArrayList<Appender> list = new ArrayList<Appender>();
+                list.addAll(log.getAppenders().values());
+                for (Appender a : list) {
+                    log.removeAppender(a);
+                }
+            }
         }
 
     }
@@ -231,35 +196,51 @@ public class AlogBenchmark {
         }
     }
 
-    static class Slf4jInterface implements BenchmarkInterface {
+    @State(Scope.Benchmark)
+    public static class Logback {
 
         private ch.qos.logback.classic.Logger log;
+        private int queueSize = 10000000;
 
-        public Slf4jInterface() {
-            log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("Slf4j");
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.error("Simple Message");
+        }
+
+        @Benchmark
+        public void exception() {
+            counter++;
+            log.error("Simple Message", exception);
+        }
+
+        @Benchmark
+        public void parameter() {
+            counter++;
+            log.error("Parameter {}", param);
+        }
+
+        @Setup(Level.Iteration)
+        public void start() {
+            if (counter > queueSize) {
+                System.out.println("******************* NEED A LARGER QUEUE! ******************");
+                queueSize = (int) (counter * 1.1);
+            }
+            counter = 0;
+            log = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("Logback");
             log.detachAndStopAllAppenders();
+            log.setAdditive(false);
+            OutputStreamAppender<ILoggingEvent> out = new OutputStreamAppender<ILoggingEvent>();
+            out.setOutputStream(new NullOutputStream());
+            out.start();
             AsyncAppender async = new AsyncAppender();
-            async.addAppender(new ConsoleAppender<ILoggingEvent>());
+            //The following needs to be larger than the max calls per iteration.
+            async.setQueueSize(queueSize);
+            async.setNeverBlock(true);
+            async.setDiscardingThreshold(0);
+            async.addAppender(out);
             async.start();
             log.addAppender(async);
-            log.setAdditive(false);
-            AlogBenchmark.out.println("Slf4j class: " + log.getClass().getName());
-        }
-
-        public void log(String message) {
-            log.info(message);
-        }
-
-        public void log(String message, Throwable ex) {
-            log.info(message, ex);
-        }
-
-        public void log(String message, Object param) {
-            log.info(message, param);
-        }
-
-        public String toString() {
-            return "Slf4j";
         }
 
     }

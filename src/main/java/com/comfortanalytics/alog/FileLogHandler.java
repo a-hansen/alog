@@ -54,7 +54,9 @@ public class FileLogHandler extends AsyncLogHandler {
      */
     private FileLogHandler(File file) {
         try {
-            setOut(new PrintStream(file, "UTF-8"));
+            BufferedOutputStream bos =
+                    new BufferedOutputStream(new FileOutputStream(file,true));
+            setOut(new PrintStream(bos, false,"UTF-8"));
             this.file = file;
             start();
         } catch (Exception x) {

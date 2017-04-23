@@ -1,7 +1,7 @@
 Alog
 ====
 
-* Version: 2.0.2
+* Version: 3.0.0
 * JDK 1.5+
 * [ISC License](https://en.wikipedia.org/wiki/ISC_license)
 * [Javadoc](https://a-hansen.github.io/alog/)
@@ -19,6 +19,15 @@ on separate threads for low latency logging.
   will be trimmed to a maximum.
 * Multiple logs can safely share the same file.
 * Extremely permissive [license](https://en.wikipedia.org/wiki/ISC_license).
+
+Warning
+-------
+
+There are several issues to be aware of before using this.
+
+* Messages still on the queue at shutdown will be lost.
+* By default, when the record queue is full, new records are ignored.
+* By default, when the record queue is 90% full, records finer than INFO are ignored.
 
 Usage
 -----
@@ -71,18 +80,16 @@ public static void main(String[] args) {
 }
 ```
 
-[Alogger.java.txt](https://github.com/a-hansen/alog/blob/master/src/main/java/com/comfortanalytics/alog/Alogger.java.txt) 
-is a Java 8 interface that could be used for efficiency and convenience.
-
 Performance
 ----------
 
-Alog is faster than Log4j2 and SLF4J in terms of application latency.  In other 
-words application threads will spend less time logging with Alog.  
+On average, JUL + Alog seems to be a little faster than async Logback and a lot faster than 
+async Log4j2 in terms of application latency. In other words application threads will spend less 
+time submitting log records with JUL + Alog. Unit tests include a JMH benchmark for comparison.
 
-Tests include a benchmark for comparing Alog with async versions of Log4j2 and 
-SLF4J (with Logback).  I can't explain why Log4j2 is so slow, I could be doing something
- wrong, but that api is impossible.
+The Log4j2 performance is suspiciously slow.  No matter what I try, it does not change, but I
+only have so much time to dink around with it.  Anyone know how to make a programmatic async 
+Log4j2 logger that simply drops records?
 
 Run the benchmark with the gradle wrapper:
 
@@ -90,12 +97,25 @@ Run the benchmark with the gradle wrapper:
 gradlew benchmark
 ```
 
-Don't run the benchmark task from within your IDE, it'll probably double print the 
-output.  Just run all tests, or AlogBenchmark specifically.
+The lower the Score the better.
+
+There are 9 benchmarks and it'll take about a minute to run them all.  I trimmed benchmark 
+configuration to finish a quickly as possible for the casual observer.  Adding more iterations, 
+threads, forks, or whatever shouldn't really change anything.
+
+Don't run the benchmark gradle task from within your IDE, it'll double print the output.  Run 
+AlogBenchmark specifically.
 
 
 History
 -------
+_3.0.0_
+  - Made default settings configurable through LogManager properties.
+  - Made the throttle configurable and changed the default to 90%.
+  - Changed the default max queue to 25K.
+  - Ensure messages with potentially mutable parameters are formatted synchronously.
+  - Now uses JMH for the benchmark.
+  
 _2.0.2_
   - Removed idea and findbugs from the gradle script.
   

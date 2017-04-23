@@ -18,8 +18,12 @@ package com.comfortanalytics.alog;
 
 import java.io.PrintStream;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
-import java.util.logging.*;
+import java.util.logging.Formatter;
+import java.util.logging.Handler;
+import java.util.logging.Level;
+import java.util.logging.LogRecord;
 
 /**
  * Enqueues log records which are then processed by separate thread.
@@ -43,7 +47,8 @@ public abstract class AsyncLogHandler extends Handler {
     private boolean open = false;
     private PrintStream out;
     private LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
-    private int queueThrottle = (int) (Alog.DEFAULT_MAX_QUEUE * .75);
+    private int throttle = 90;
+    private int throttleThreshold = (int) (Alog.DEFAULT_MAX_QUEUE * .90);
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -59,6 +64,15 @@ public abstract class AsyncLogHandler extends Handler {
     public int backlog() {
         synchronized (queue) {
             return queue.size();
+        }
+    }
+
+    /**
+     * Clears the queue.
+     */
+    public void clearBacklog() {
+        synchronized (queue) {
+            queue.clear();
         }
     }
 
@@ -93,6 +107,14 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
+     * When the queue fills to this percent, records finer than INFO are dropped.  Set
+     * to 100 to disable this behavior, the default is 90.
+     */
+    public int getThrottle() {
+        return throttle;
+    }
+
+    /**
      * The sink for formatted messages.
      */
     protected PrintStream getOut() {
@@ -118,24 +140,90 @@ public abstract class AsyncLogHandler extends Handler {
     @Override
     public void publish(LogRecord record) {
         if (open) {
-            synchronized (queue) {
+            if (maxQueueSize > 0) {
                 int size = queue.size();
-                if (size < maxQueueSize) {
-                    if (size > queueThrottle) {
+                if (size >= throttleThreshold) {
+                    if (size < maxQueueSize) {
                         if (record.getLevel().intValue() < Level.INFO.intValue()) {
                             return;
                         }
+                    } else {
+                        return;
                     }
-                    queue.addLast(record);
-                    queue.notify();
                 }
+            }
+            Object[] params = record.getParameters();
+            if ((params != null) && (params.length > 0)) {
+                String msg = record.getMessage();
+                if ((msg != null) && (msg.length() > 0)) {
+                    Object param;
+                    for (int i = params.length; --i >= 0; ) {
+                        param = params[i];
+                        if (param instanceof String) {
+                            continue;
+                        } else if (param instanceof Integer) {
+                            continue;
+                        } else if (param instanceof Boolean) {
+                            continue;
+                        } else if (param instanceof Byte) {
+                            continue;
+                        } else if (param instanceof Character) {
+                            continue;
+                        } else if (param instanceof Date) {
+                            continue;
+                        } else if (param instanceof Double) {
+                            continue;
+                        } else if (param instanceof Enum) {
+                            continue;
+                        } else if (param instanceof Float) {
+                            continue;
+                        } else if (param instanceof Long) {
+                            continue;
+                        } else if (param instanceof Short) {
+                            continue;
+                        } else if (param instanceof Calendar) {
+                            params[i] = ((Calendar) param).clone();
+                        } else if (param instanceof Number) {
+                            Formatter formatter = getFormatter();
+                            if (formatter != null) {
+                                record.setMessage(formatter.formatMessage(record));
+                            } else {
+                                record.setMessage(String.format(msg, params));
+                            }
+                            record.setParameters(null);
+                            break;
+                        } else {
+                            params[i] = param.toString();
+                        }
+                    }
+                }
+            }
+            synchronized (queue) {
+                queue.addLast(record);
+                queue.notify();
             }
         }
     }
 
+    /**
+     * The maximum number of records allowed in the queue, after which log records will be dropped.
+     * Set to zero or less for an unbounded queue.
+     */
     public AsyncLogHandler setMaxQueueSize(int maxQueueSize) {
         this.maxQueueSize = maxQueueSize;
-        this.queueThrottle = (int) (maxQueueSize * .75);
+        this.throttleThreshold = maxQueueSize * (throttle / 100);
+        return this;
+    }
+
+    /**
+     * When the queue fills to this percent, records finer than INFO are dropped.  Set
+     * to 100 to disable this behavior, the default is 90.
+     *
+     * @param percent 0-100 where 100 would disable the throttle.
+     */
+    public AsyncLogHandler setThrottle(int percent) {
+        this.throttle = percent;
+        this.throttleThreshold = maxQueueSize * (throttle / 100);
         return this;
     }
 
@@ -165,38 +253,40 @@ public abstract class AsyncLogHandler extends Handler {
     protected void write(LogRecord record) {
         Formatter formatter = getFormatter();
         if (formatter != null) {
-            out.println(formatter.formatMessage(record));
+            out.println(formatter.format(record));
             return;
         }
         // log name
-        out.print(record.getLoggerName());
-        out.print(" [");
+        builder.append(record.getLoggerName());
+        builder.append(" [");
         // timestamp
         calendar.setTimeInMillis(record.getMillis());
-        out.print(Time.encodeForLogs(calendar, builder).toString());
-        builder.setLength(0);
-        out.print("] ");
+        Time.encodeForLogs(calendar, builder);
+        builder.append("] ");
         // severity
-        out.print(record.getLevel().getLocalizedName());
+        builder.append(record.getLevel().getLocalizedName());
+        // class
+        if (record.getSourceClassName() != null) {
+            builder.append(' ');
+            builder.append(record.getSourceClassName());
+        }
+        // method
+        if (record.getSourceMethodName() != null) {
+            builder.append(' ');
+            builder.append(record.getSourceMethodName());
+        }
         // message
         String msg = record.getMessage();
         if ((msg != null) && (msg.length() > 0)) {
-            if (record.getSourceClassName() != null) {
-                out.print(' ');
-                out.print(record.getSourceClassName());
-            }
-            if (record.getSourceMethodName() != null) {
-                out.print(' ');
-                out.print(record.getSourceMethodName());
-            }
             Object[] params = record.getParameters();
             if (params != null) {
                 msg = String.format(msg, params);
             }
-            out.print(' ');
-            out.print(msg);
+            builder.append(' ');
+            builder.append(msg);
         }
-        out.println();
+        out.println(builder.toString());
+        builder.setLength(0);
         // exception
         Throwable thrown = record.getThrown();
         if (thrown != null) {
@@ -209,6 +299,7 @@ public abstract class AsyncLogHandler extends Handler {
     ///////////////////////////////////////////////////////////////////////////
 
     private class LogHandlerThread extends Thread {
+
         public LogHandlerThread() {
             super(AsyncLogHandler.this.getThreadName());
             setDaemon(true);
