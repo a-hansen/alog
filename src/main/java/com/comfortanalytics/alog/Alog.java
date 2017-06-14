@@ -51,7 +51,7 @@ public class Alog {
      * The threshold file size after which the file will be zipped into a backup and a new
      * log file will be started; 10 mb by default.
      */
-    public static int DEFAULT_BACKUP_THRESHOLD = 1024 * 10;
+    public static int DEFAULT_BACKUP_THRESHOLD = 10 * 1000 * 1000;
 
     /**
      * The default number of backups to retain; 10 by default.
