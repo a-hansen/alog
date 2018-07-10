@@ -2,7 +2,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group 'alog'
-version '3.0.0'
+version '4.0.0'
 
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
@@ -13,15 +13,19 @@ repositories {
 }
 
 dependencies {
-    testCompile 'ch.qos.logback:logback-classic:1.2.3'
-    testCompile 'ch.qos.logback:logback-core:1.2.3'
-    testCompile 'com.lmax:disruptor:3.2.0'
-    testCompile 'org.apache.logging.log4j:log4j-api:2.8.2'
-    testCompile 'org.apache.logging.log4j:log4j-core:2.8.2'
-    testCompile 'org.openjdk.jmh:jmh-core:1.18'
-    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.18'
-    testCompile 'org.slf4j:slf4j-api:1.7.25'
-    testCompile 'junit:junit:4.12'
+    testCompile 'ch.qos.logback:logback-classic:+'
+    testCompile 'ch.qos.logback:logback-core:+'
+    testCompile 'com.lmax:disruptor:+'
+    testCompile 'org.apache.logging.log4j:log4j-api:+'
+    testCompile 'org.apache.logging.log4j:log4j-core:+'
+    testCompile 'org.openjdk.jmh:jmh-core:+'
+    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:+'
+    testCompile 'org.slf4j:slf4j-api:+'
+    testCompile 'junit:junit:+'
+}
+
+test {
+    exclude '**/*Benchmark*'
 }
 
 task benchmark(type: Test) {
@@ -32,4 +36,8 @@ task benchmark(type: Test) {
     filter {
         includeTestsMatching "com.comfortanalytics.alog.AlogBenchmark"
     }
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.8.1'
 }

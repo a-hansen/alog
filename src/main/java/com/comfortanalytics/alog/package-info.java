@@ -1,6 +1,6 @@
 /**
- * Async log handler for Java Util Logging.  It uses separate threads to print log
- * messages for improved performance.
+ * Async log handling for Java Util Logging.  Prints log messages on seperate threads for
+ * reduced application logging latency.
  * <p>
  * The following are notable features:
  * <ul>
@@ -16,7 +16,7 @@
  * already been added.
  * <p>
  * <pre>
- * import com.ca.alog.*;
+ * import com.comfortanalytics.alog.*;
  *
  * public static void main(String[] args) {
  *     Logger log = Alog.getLogger("myLog", new File("myLog")));
@@ -27,7 +27,7 @@
  * for each absolute file path.
  * <p>
  * <pre>
- * import com.ca.alog.*;
+ * import com.comfortanalytics.alog.*;
  *
  * public static void main(String[] args) {
  *     Logger log = Alog.getLogger("myLog", new File("myLog")));
@@ -35,14 +35,13 @@
  * }
  * </pre>
  * <p>
- * The default log handler that prints to System.out can be replaced as well.
+ * The root log handler that prints to System.out can easily be replaced as well.
  * <p>
  * <pre>
- * import com.ca.alog.*;
+ * import com.comfortanalytics.alog.*;
  *
  * public static void main(String[] args) {
  *     Alog.replaceRootHandler();
- *     Logger log = Alog.getLogger("myLog", new File("myLog")));
  * }
  * </pre>
  *

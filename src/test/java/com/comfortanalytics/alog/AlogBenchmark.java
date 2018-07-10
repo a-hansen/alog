@@ -1,19 +1,3 @@
-/* ISC License
- *
- * Copyright 2017 by Comfort Analytics, LLC.
- *
- * Permission to use, copy, modify, and/or distribute this software for any purpose with
- * or without fee is hereby granted, provided that the above copyright notice and this
- * permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package com.comfortanalytics.alog;
 
 import ch.qos.logback.classic.AsyncAppender;
@@ -97,12 +81,6 @@ public class AlogBenchmark {
         private java.util.logging.Logger log;
 
         @Benchmark
-        public void simple() {
-            counter++;
-            log.severe("Simple Message");
-        }
-
-        @Benchmark
         public void exception() {
             counter++;
             log.log(java.util.logging.Level.SEVERE, "Message", exception);
@@ -114,11 +92,17 @@ public class AlogBenchmark {
             log.log(java.util.logging.Level.SEVERE, "Parameter {0}", param);
         }
 
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.severe("Simple Message");
+        }
+
         @Setup(Level.Iteration)
         public void start() {
             counter = 0;
             if (log == null) {
-                com.comfortanalytics.alog.Alog.DEFAULT_MAX_QUEUE = -1; //ignore no messages
+                com.comfortanalytics.alog.AsyncLogHandler.DEFAULT_MAX_QUEUE = -1; //ignore no messages
                 log = com.comfortanalytics.alog.Alog.getLogger(
                         "Alog", new PrintStream(new NullOutputStream()));
                 log.getHandlers()[0].setFormatter(new SimpleFormatter());
@@ -140,12 +124,6 @@ public class AlogBenchmark {
         private org.apache.logging.log4j.core.Logger log;
 
         @Benchmark
-        public void simple() {
-            counter++;
-            log.error("Simple Message");
-        }
-
-        @Benchmark
         public void exception() {
             counter++;
             log.error("Message", exception);
@@ -155,6 +133,12 @@ public class AlogBenchmark {
         public void parameter() {
             counter++;
             log.error("Parameter {}", param);
+        }
+
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.error("Simple Message");
         }
 
         @Setup
@@ -177,29 +161,11 @@ public class AlogBenchmark {
 
     }
 
-    static class NullOutputStream extends OutputStream {
-
-        public void write(byte[] b) {
-        }
-
-        public void write(byte[] b, int off, int len) {
-        }
-
-        public void write(int b) {
-        }
-    }
-
     @State(Scope.Benchmark)
     public static class Logback {
 
         private ch.qos.logback.classic.Logger log;
         private int queueSize = 10000000;
-
-        @Benchmark
-        public void simple() {
-            counter++;
-            log.error("Simple Message");
-        }
 
         @Benchmark
         public void exception() {
@@ -211,6 +177,12 @@ public class AlogBenchmark {
         public void parameter() {
             counter++;
             log.error("Parameter {}", param);
+        }
+
+        @Benchmark
+        public void simple() {
+            counter++;
+            log.error("Simple Message");
         }
 
         @Setup(Level.Iteration)
@@ -236,6 +208,18 @@ public class AlogBenchmark {
             log.addAppender(async);
         }
 
+    }
+
+    static class NullOutputStream extends OutputStream {
+
+        public void write(byte[] b) {
+        }
+
+        public void write(byte[] b, int off, int len) {
+        }
+
+        public void write(int b) {
+        }
     }
 
     // /////////////////////////////////////////////////////////////////////////

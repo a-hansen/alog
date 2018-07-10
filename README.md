@@ -10,67 +10,114 @@ Alog
 Overview
 --------
 
-An asynchronous log handler for JUL (Java Util Logging).  It processes log messages
-on separate threads for low latency logging.
+An asynchronous log handler for JUL (Java Util Logging).  It prints log
+messages on separate threads for low latency logging.
 
-* Fast.  Minimum application interference.
-* Async handlers for java.io.PrintStream and java.io.File.
-* Files will be zipped after they exceed a certain size, and the number of zip backups 
-  will be trimmed to a maximum.
+* Minimal application interference.
+* Minimal code / jar size.
+* Files will be zipped after they reach a configurable size, and the
+number of zip backups will be trimmed to a configurable maximum.
 * Multiple logs can safely share the same file.
-* Extremely permissive [license](https://en.wikipedia.org/wiki/ISC_license).
 
-Warning
--------
+There are two ways to use Alog: configuration files and programmatically.
 
-There are several issues to be aware of before using this.
+Configuration Files
+-------------------
 
-* Messages still on the queue at shutdown will be lost.
-* By default, when the record queue is full, new records are ignored.
-* By default, when the record queue is 90% full, records finer than INFO are ignored.
+Alog uses configuration as specified by Java Util Logging.  See the
+javadoc for java.util.logging.LogManager for details.
 
-Usage
------
+There are two handlers:
 
-Initially acquire logs with Alog.getLogger(). It will add a log handler only if one 
-has not already been added.
+* com.comfortanalytics.alog.FileLogHandler
+* com.comfortanalytics.alog.PrintStreamLogHandler
+
+The following keys can be used with both:
+
+* _com.comfortanalytics.alog.filter_ is the name of a Filter class to use
+(defaults to no Filter).
+* _com.comfortanalytics.alog.formatter_ is the name of a Formatter class
+to use (defaults to null and uses an optimized Alog format) .
+* _com.comfortanalytics.alog.level_ is the default level for the Handler
+(defaults to INFO).
+* _com.comfortanalytics.alog.maxQueue_ is the max async queue size above
+which records are ignored (defaults to 25000, use 0 for infinite).
+* _com.comfortanalytics.alog.throttle_ is the percentage (0-100) of the
+maxQueue after which log records less than INFO are ignored (defaults to
+90%). A value of 100 effectively disables the throttle.
+
+The following keys can also be used with the FileLogHandler:
+
+* _com.comfortanalytics.alog.backupThreshold_ is the approximate file
+size in bytes to zip up the log file and store it with a timestamp
+appended to the file name (default is 10000000 bytes).
+* _com.comfortanalytics.alog.encoding is the charset for encoding log
+files (default is "UTF-8").
+* _com.comfortanalytics.alog.filename_ is the pattern for generating the
+output file name. See below for details. (default is "java.log").
+* _com.comfortanalytics.alog.maxBackups_ is the number of zip backups to
+maintain (default is 10).
+
+The filename pattern uses the following tokens:
+
+* "/" represents the local pathname separator.
+* "%t" is the system temporary directory.
+* "%h" is the value of the "user.home" system property.
+* "%%" translates to a single percent sign "%".
+
+Example configuration for an async file handler:
+
+```
+myLog.handlers=com.comfortanalytics.alog.FileLogHandler
+com.comfortanalytics.alog.level=CONFIG
+com.comfortanalytics.alog.maxQueue=50000
+com.comfortanalytics.alog.backupThreshold=100000000
+com.comfortanalytics.alog.filename=%halog.log
+com.comfortanalytics.alog.maxBackups=5
+```
+
+To replace the root handler that prints to the console with one that
+does it ansynchronously:
+
+```
+handlers=com.comfortanalytics.alog.PrintStreamLogHandler
+com.comfortanalytics.alog.level=FINE
+```
+
+
+
+Programmatic Usage
+------------------
+
+Initially acquire logs with Alog.getLogger(). It will add a log handler
+only if one has not already been added.
 
 ```java
 import com.comfortanalytics.alog.*;
 
 public static void main(String[] args) {
-    Logger log = Alog.getLogger("myLog", new File("myLog")));
+    Logger log = Alog.getLogger("myLog", new File("myLog.log")));
 }
 ```
 
-You can always create a handler and add it yourself.
+Multiple logs can share the same file.  A single FileLogHandler will be
+maintained for each absolute file path.  Be aware that once closed,
+none of the other logs should use the same handler.
 
 ```java
 import com.comfortanalytics.alog.*;
 
 public static void main(String[] args) {
-      FileLogHandler handler = FileLogHandler.getHandler(new File("myLog.log"));
-      Logger logger = Logger.getLogger("myLog");
-      logger.addHandler(handler);
-}
-```
-
-Multiple logs can share the same file.  A single FileLogHandler will be maintained for 
-each absolute file path.
-
-```java
-import com.comfortanalytics.alog.*;
-
-public static void main(String[] args) {
-    Logger log = Alog.getLogger("myLog", new File("myLog")));
-    Logger another = Alog.getLogger("anotherLog", new File("myLog")));
+    Logger log = Alog.getLogger("myLog", new File("myLog.log")));
+    Logger another = Alog.getLogger("anotherLog", new File("myLog.log")));
     if (log.getHandlers()[0] == another.getHandlers()[0]) {
         System.out.println("This will print.");
     }
 }
 ```
 
-The default log handler that prints to System.out can and should be replaced as well.
+The default log handler that prints to System.out should be replaced as
+well.
 
 ```java
 import com.comfortanalytics.alog.*;
@@ -81,14 +128,14 @@ public static void main(String[] args) {
 ```
 
 Performance
-----------
+-----------
 
 On average, JUL + Alog seems to be a little faster than async Logback and a lot faster than 
 async Log4j2 in terms of application latency. In other words application threads will spend less 
 time submitting log records with JUL + Alog. Unit tests include a JMH benchmark for comparison.
 
 The Log4j2 performance is suspiciously slow.  No matter what I try, it does not change, but I
-only have so much time to dink around with it.  Anyone know how to make a programmatic async 
+only have so much time to try and figure out that API.  Anyone know how to make a programmatic async
 Log4j2 logger that simply drops records?
 
 Run the benchmark with the gradle wrapper:
@@ -109,6 +156,10 @@ AlogBenchmark specifically.
 
 History
 -------
+_4.0.0_
+  - Proper configuration file support.
+  - The close method does not return until the queue is drained.
+
 _3.0.0_
   - Made default settings configurable through LogManager properties.
   - Made the throttle configurable and changed the default to 90%.
