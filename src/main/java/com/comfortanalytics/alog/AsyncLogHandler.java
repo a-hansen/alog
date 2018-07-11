@@ -22,31 +22,26 @@ public abstract class AsyncLogHandler extends Handler {
     // Class Fields
     ///////////////////////////////////////////////////////////////////////////
 
+    static final String PROPERTY_BASE = "com.comfortanalytics.alog";
     /**
      * The approximate file size after which a file will be zipped into a backup and a new
      * log file will be started; 10 mb by default.
      */
     static int DEFAULT_BACKUP_THRESHOLD = 10 * 1000 * 1000;
-
     /**
      * The default number of backups to retain; 10 by default.
      */
     static int DEFAULT_MAX_BACKUPS = 10;
-
     /**
      * Max async queue size after which records will be ignored; 25K by default.
      */
     static int DEFAULT_MAX_QUEUE = 25000;
-
     /**
      * Percentage (0-100) of the max queue after which log records less than
      * INFO are ignored; 90 by default.
      */
     static int DEFAULT_THROTTLE = 90;
-
     static int EMPTY_QUEUE_TIMEOUT = 15000;
-
-    static final String PROPERTY_BASE = "com.comfortanalytics.alog";
 
     //////////////////////////////////////////////////////////////////////////
     // Instance Fields
@@ -54,6 +49,7 @@ public abstract class AsyncLogHandler extends Handler {
 
     private StringBuilder builder;
     private Calendar calendar;
+    private boolean inferCaller = false;
     private LogHandlerThread logHandlerThread;
     private int maxQueueSize = DEFAULT_MAX_QUEUE;
     private boolean open = false;
@@ -107,6 +103,10 @@ public abstract class AsyncLogHandler extends Handler {
         }
     }
 
+    public boolean getInferCaller() {
+        return inferCaller;
+    }
+
     public int getMaxQueueSize() {
         return maxQueueSize;
     }
@@ -140,6 +140,9 @@ public abstract class AsyncLogHandler extends Handler {
                     return;
                 }
             }
+        }
+        if (inferCaller) {
+            record.getSourceMethodName();
         }
         Object[] params = record.getParameters();
         if ((params != null) && (params.length > 0)) {
@@ -196,6 +199,11 @@ public abstract class AsyncLogHandler extends Handler {
         }
     }
 
+    public AsyncLogHandler setInferCaller(boolean fill) {
+        inferCaller = fill;
+        return this;
+    }
+
     /**
      * The maximum number of records allowed in the queue, after which log records will be dropped.
      * Set to zero or less for an unbounded queue.
@@ -237,6 +245,8 @@ public abstract class AsyncLogHandler extends Handler {
         if (formatter != null) {
             setFormatter(formatter);
         }
+        prop = manager.getProperty(PROPERTY_BASE + ".inferCaller");
+        setInferCaller(optBoolean(prop, false));
         prop = manager.getProperty(PROPERTY_BASE + ".level");
         setLevel(optLevel(prop, Level.INFO));
         prop = manager.getProperty(PROPERTY_BASE + ".maxQueue");
@@ -343,6 +353,16 @@ public abstract class AsyncLogHandler extends Handler {
     ///////////////////////////////////////////////////////////////////////////
     // Package / Private Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    static boolean optBoolean(String val, boolean defaultValue) {
+        if (val != null) {
+            try {
+                return Boolean.parseBoolean(val);
+            } catch (Exception ignore) {
+            }
+        }
+        return defaultValue;
+    }
 
     static Filter optFilter(String val, Filter defaultValue) {
         if (val != null) {

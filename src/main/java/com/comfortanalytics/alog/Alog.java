@@ -46,6 +46,13 @@ public class Alog {
     }
 
     /**
+     * A convenience for Logger.getLogger(clazz.getName())
+     */
+    public static Logger getLogger(Class clazz) {
+        return Logger.getLogger(clazz.getName());
+    }
+
+    /**
      * Adds a FileLogHandler to the logger named for the given class, if there isn't one for the
      * same file already. This can be used repeatedly to acquire the same logger, but doing so
      * would be inefficient.  Use Logger.getLogger after this has installed the handler.

@@ -37,14 +37,14 @@ public class AlogTest {
         Assert.assertEquals(log.getHandlers()[0], handler);
         Alog.replaceRootHandler();
         Assert.assertTrue(log.getHandlers()[0] instanceof PrintStreamLogHandler);
-        /*
-        log = Logger.getLogger("Fubar");
+
+        log = Alog.getLogger(getClass());
+        Alog.getHandler(log).setInferCaller(true);
         log.log(Level.INFO, "Just for viewing the format", new Exception());
         try {
             Thread.sleep(50);
         } catch (Exception x) {
         }
-        */
     }
 
 }

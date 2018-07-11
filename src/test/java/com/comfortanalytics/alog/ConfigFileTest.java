@@ -2,7 +2,6 @@ package com.comfortanalytics.alog;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
@@ -24,15 +23,12 @@ public class ConfigFileTest {
             "com.comfortanalytics.alog.throttle=85\n" +
             "com.comfortanalytics.alog.filename=foobar.log\n" +
             "com.comfortanalytics.alog.maxBackups=5\n" +
+            "com.comfortanalytics.alog.inferCaller=true\n" +
             "com.comfortanalytics.alog.backupThreshold=100\n";
 
     @Before
     public void setup() {
         LogManager.getLogManager().reset();
-        Logger root = Alog.rootLogger();
-        for (Handler h : root.getHandlers()) {
-            root.removeHandler(h);
-        }
     }
 
     @After
@@ -52,6 +48,7 @@ public class ConfigFileTest {
         Assert.assertTrue(handler.getFormatter() instanceof SimpleFormatter);
         Assert.assertTrue(handler.getThrottle() == 85);
         Assert.assertTrue(handler.getMaxBackups() == 5);
+        Assert.assertTrue(handler.getInferCaller());
         Assert.assertTrue(handler.getBackupThreshold() == 100);
     }
 

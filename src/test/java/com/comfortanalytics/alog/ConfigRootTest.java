@@ -20,6 +20,7 @@ public class ConfigRootTest {
             "com.comfortanalytics.alog.level=CONFIG\n" +
             "com.comfortanalytics.alog.maxQueue=50000\n" +
             "com.comfortanalytics.alog.formatter=java.util.logging.SimpleFormatter\n" +
+            "com.comfortanalytics.alog.inferCaller=true\n" +
             "com.comfortanalytics.alog.throttle=85\n";
 
     @Before
@@ -45,6 +46,7 @@ public class ConfigRootTest {
         Assert.assertTrue(handler.getLevel() == Level.CONFIG);
         Assert.assertTrue(handler.getMaxQueueSize() == 50000);
         Assert.assertTrue(handler.getFormatter() instanceof SimpleFormatter);
+        Assert.assertTrue(handler.getInferCaller());
         Assert.assertTrue(handler.getThrottle() == 85);
     }
 

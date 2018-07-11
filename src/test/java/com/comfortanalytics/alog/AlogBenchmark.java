@@ -56,15 +56,16 @@ public class AlogBenchmark {
     public void run() throws Exception {
         //Add more iterations, forks, etc, results should be similar or better.  At least they
         //were on my machine.
+        int COUNT = 1;
         Options opt = new OptionsBuilder()
                 .include(this.getClass().getName() + ".*")
-                //.mode(Mode.Throughput)
-                .mode(Mode.AverageTime)
+                .mode(Mode.Throughput)
+                //.mode(Mode.AverageTime)
                 .timeUnit(TimeUnit.MICROSECONDS)
-                .warmupIterations(5)
-                .measurementIterations(5)
-                .forks(1)
-                .threads(10)
+                .warmupIterations(COUNT)
+                .measurementIterations(COUNT)
+                .forks(COUNT)
+                .threads(COUNT)
                 .shouldDoGC(true)
                 .jvmArgs("")
                 .build();
@@ -105,7 +106,7 @@ public class AlogBenchmark {
                 com.comfortanalytics.alog.AsyncLogHandler.DEFAULT_MAX_QUEUE = -1; //ignore no messages
                 log = com.comfortanalytics.alog.Alog.getLogger(
                         "Alog", new PrintStream(new NullOutputStream()));
-                log.getHandlers()[0].setFormatter(new SimpleFormatter());
+                //log.getHandlers()[0].setFormatter(new SimpleFormatter());
                 log.setUseParentHandlers(false);
             }
         }

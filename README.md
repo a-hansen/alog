@@ -38,6 +38,10 @@ The following keys can be used with both:
 (defaults to no Filter).
 * _com.comfortanalytics.alog.formatter_ is the name of a Formatter class
 to use (defaults to null and uses an optimized Alog format) .
+* _com.comfortanalytics.alog.inferCaller_ is a boolean that
+determines whether or not to infer the source class and method name
+before submitting the log record for async processing which is
+expensive (default is false).
 * _com.comfortanalytics.alog.level_ is the default level for the Handler
 (defaults to INFO).
 * _com.comfortanalytics.alog.maxQueue_ is the max async queue size above
