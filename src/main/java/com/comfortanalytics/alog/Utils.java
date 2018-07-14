@@ -31,19 +31,6 @@ class Utils {
     ///////////////////////////////////////////////////////////////////////////
 
     /**
-     * Use by testing.
-     */
-    static void clearHandlers(String logName) {
-        Logger log = Logger.getLogger(logName);
-        for (Handler h : log.getHandlers()) {
-            if (h instanceof AsyncLogHandler) {
-                h.close();
-                log.removeHandler(h);
-            }
-        }
-    }
-
-    /**
      * Converts a Java Calendar into a number safe for file names: YYMMDD-HHMMSS.
      *
      * @param calendar The calendar representing the timestamp to encode.
