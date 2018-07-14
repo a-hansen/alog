@@ -1,11 +1,9 @@
 Alog
 ====
-
-* Version: 4.0.0
+[![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog/+)
 * JDK 1.5+
 * [ISC License](https://en.wikipedia.org/wiki/ISC_license)
 * [Javadoc](https://jitpack.io/com/github/a-hansen/alog/v4.0.0/javadoc/)
-* For adding the dependency, visit [![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog/+)
 
 Overview
 --------
