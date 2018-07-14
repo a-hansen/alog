@@ -70,7 +70,7 @@
  <li>com.comfortanalytics.alog.level - is the default level for the Handler
  (defaults to INFO).
  <li>com.comfortanalytics.alog.maxQueue - is the max async queue size above
- which records are ignored (defaults to 2500, use 0 for infinite).
+ which records are ignored (defaults to 25000, use 0 for infinite).
  <li>com.comfortanalytics.alog.throttle - is the percentage (0-100) of the
  maxQueue after which log records less than INFO are ignored (defaults to
  90%). A value of 100 effectively disables the throttle.
