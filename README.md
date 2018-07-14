@@ -11,11 +11,10 @@ Overview
 An asynchronous log handler for JUL (Java Util Logging).  It prints log
 messages on separate threads for low latency logging.
 
-* Minimized application interference.
+* Minimal application interference.
 * Small code / jar size.
-* Files will be zipped after they reach a configurable size, and the
+* Files will be zipped after they reach a configurable size and the
 number of zip backups will be trimmed to a configurable maximum.
-* Multiple logs can safely share the same file.
 
 There are two ways to use Alog: programmatically and with configuration
 files.
@@ -38,7 +37,7 @@ public static void main(String[] args) {
 
 Multiple logs can share the same file.  A single FileLogHandler will be
 maintained for each absolute file path.  Be aware that once closed,
-none of the other logs should use the same handler.
+none of the other logs can use the same handler.
 
 ```java
 import com.comfortanalytics.alog.*;
@@ -52,7 +51,7 @@ public static void main(String[] args) {
 }
 ```
 
-The default log handler that prints to System.out should be replaced as
+The root log handler that prints to System.out should be replaced as
 well.
 
 ```java
@@ -132,39 +131,3 @@ com.comfortanalytics.alog.maxQueue=5000
 com.comfortanalytics.alog.throttle=95
 ```
 
-History
--------
-_4.0.0_
-  - Major refactor.
-  - Proper configuration file support.
-  - The close methods will not return until the associate queue is
-    drained.
-  - Better tests.
-
-_3.0.0_
-  - Made default settings configurable through LogManager properties.
-  - Made the throttle configurable and changed the default to 90%.
-  - Changed the default max queue to 25K.
-  - Ensure messages with potentially mutable parameters are formatted synchronously.
-  - Now uses JMH for the benchmark.
-  
-_2.0.2_
-  - Removed idea and findbugs from the gradle script.
-  
-_2.0.1_
-  - Benchmark rework.
-  - Added the gradle wrapper.
-  
-_2.0.0_
-  - Package change.
-  
-_1.1.0_
-  - Formatting fixes / changes.
-  - Added a max queue size.
-  - If the queue is 75% full, records less than INFO will be discarded.
-  - True jdk 1.5 compatibility.
-  - Changed the async thread sleep/wait interval.
-  - Added other logging framework benchmarks to the unit tests for comparison.
-
-_1.0.0_
-  - Hello World.

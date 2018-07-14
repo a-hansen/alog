@@ -34,7 +34,7 @@ public abstract class AsyncLogHandler extends Handler {
     /**
      * Max async queue size after which records will be ignored; 25K by default.
      */
-    static int DEFAULT_MAX_QUEUE = 2500;
+    static int DEFAULT_MAX_QUEUE = 25000;
     /**
      * Percentage (0-100) of the max queue after which log records less than
      * INFO are ignored; 90 by default.
@@ -132,6 +132,7 @@ public abstract class AsyncLogHandler extends Handler {
             }
         }
         if (inferCaller) {
+            record.getSourceClassName();
             record.getSourceMethodName();
         }
         Object[] params = record.getParameters();
