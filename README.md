@@ -1,3 +1,5 @@
+[![Release](https://jitpack.io/v3.0.0/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog)
+
 Alog
 ====
 
@@ -18,8 +20,6 @@ messages on separate threads for low latency logging.
 * Files will be zipped after they reach a configurable size, and the
 number of zip backups will be trimmed to a configurable maximum.
 * Multiple logs can safely share the same file.
-* [![Release](https://jitpack.io/v3.0.0/a-hansen/alog.svg)]
-(https://jitpack.io/#a-hansen/alog)
 
 There are two ways to use Alog: programmatically and with configuration
 files.
