@@ -1,38 +1,16 @@
-/* ISC License
- *
- * Copyright 2017 by Comfort Analytics, LLC.
- *
- * Permission to use, copy, modify, and/or distribute this software for any purpose with
- * or without fee is hereby granted, provided that the above copyright notice and this
- * permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package com.comfortanalytics.alog;
 
+import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.TimeZone;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
+import java.util.logging.Logger;
 
 /**
- * Time utilities.
- *
  * @author Aaron Hansen
  */
-class Time {
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Constants
-    ///////////////////////////////////////////////////////////////////////////
-
-    public static final long NANOS_IN_MS = 1000000;
-    public static final long NANOS_IN_SEC = 1000 * NANOS_IN_MS;
-    public static final long NANOS_IN_10SEC = 10 * NANOS_IN_SEC;
+class Utils {
 
     ///////////////////////////////////////////////////////////////////////////
     // Fields
@@ -45,10 +23,7 @@ class Time {
     // Constructors
     ///////////////////////////////////////////////////////////////////////////
 
-    /**
-     * Do not allow instantiation.
-     */
-    private Time() {
+    private Utils() {
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -57,40 +32,66 @@ class Time {
 
     /**
      * Converts a Java Calendar into a number safe for file names: YYMMDD-HHMMSS.
-     * If seconds align to 00, then they will be omitted.
      *
      * @param calendar The calendar representing the timestamp to encode.
+     * @param secs     Whether or not to include the seconds.
+     * @param ms       Whether or not to include the millis.
      * @param buf      The buffer to append the encoded timestamp and return,
      *                 can be null.
      * @return The buf argument, or if that was null, a new StringBuilder.
      */
-    public static StringBuilder encodeForFiles(Calendar calendar, StringBuilder buf) {
+    static StringBuilder encodeForFiles(Calendar calendar,
+                                        boolean secs,
+                                        boolean ms,
+                                        StringBuilder buf) {
         if (buf == null) {
             buf = new StringBuilder();
         }
         int tmp = calendar.get(Calendar.YEAR) % 100;
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp);
         //month
         tmp = calendar.get(Calendar.MONTH) + 1;
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp);
         //date
         tmp = calendar.get(Calendar.DAY_OF_MONTH);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp).append('-');
         //hour
         tmp = calendar.get(Calendar.HOUR_OF_DAY);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp);
         //minute
         tmp = calendar.get(Calendar.MINUTE);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp);
         //second
-        tmp = calendar.get(Calendar.SECOND);
-        if (tmp > 0) {
-            if (tmp < 10) buf.append('0');
+        if (secs) {
+            tmp = calendar.get(Calendar.SECOND);
+            if (tmp < 10) {
+                buf.append('0');
+            }
+            buf.append(tmp);
+        }
+        if (ms) {
+            tmp = calendar.get(Calendar.MILLISECOND);
+            if (tmp < 100) {
+                buf.append('0');
+            }
+            if (tmp < 10) {
+                buf.append('0');
+            }
             buf.append(tmp);
         }
         return buf;
@@ -105,7 +106,7 @@ class Time {
      *                 can be null.
      * @return The buf argument, or if that was null, a new StringBuilder.
      */
-    public static StringBuilder encodeForLogs(Calendar calendar, StringBuilder buf) {
+    static StringBuilder encodeForLogs(Calendar calendar, StringBuilder buf) {
         if (buf == null) {
             buf = new StringBuilder();
         }
@@ -113,23 +114,33 @@ class Time {
         buf.append(tmp).append('-');
         //month
         tmp = calendar.get(Calendar.MONTH) + 1;
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp).append('-');
         //date
         tmp = calendar.get(Calendar.DAY_OF_MONTH);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp).append(' ');
         //hour
         tmp = calendar.get(Calendar.HOUR_OF_DAY);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp).append(':');
         //minute
         tmp = calendar.get(Calendar.MINUTE);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp).append(':');
         //second
         tmp = calendar.get(Calendar.SECOND);
-        if (tmp < 10) buf.append('0');
+        if (tmp < 10) {
+            buf.append('0');
+        }
         buf.append(tmp);
         return buf;
     }
@@ -138,9 +149,9 @@ class Time {
      * Attempts to reuse a calendar instance, the timezone will be set to
      * TimeZone.getDefault().
      */
-    public static Calendar getCalendar() {
+    static Calendar getCalendar() {
         Calendar cal = null;
-        synchronized (Time.class) {
+        synchronized (Utils.class) {
             if (calendarCache1 != null) {
                 cal = calendarCache1;
                 calendarCache1 = null;
@@ -161,7 +172,7 @@ class Time {
      * Attempts to reuse a calendar instance and sets the time in millis to the argument
      * and the timezone to TimeZone.getDefault().
      */
-    public static Calendar getCalendar(long timestamp) {
+    static Calendar getCalendar(long timestamp) {
         Calendar cal = getCalendar();
         cal.setTimeInMillis(timestamp);
         return cal;
@@ -170,8 +181,8 @@ class Time {
     /**
      * Return a calendar instance for reuse.
      */
-    public static void recycle(Calendar cal) {
-        synchronized (Time.class) {
+    static void recycle(Calendar cal) {
+        synchronized (Utils.class) {
             if (calendarCache1 == null) {
                 calendarCache1 = cal;
             } else {
@@ -179,5 +190,55 @@ class Time {
             }
         }
     }
+
+
+    /**
+     * Formats and writes the log record the underlying stream.
+     */
+    static void write(LogRecord record, PrintStream out, StringBuilder builder, Calendar calendar) {
+        if (builder == null) {
+            builder = new StringBuilder();
+            calendar = Calendar.getInstance();
+        }
+        builder.append('[');
+        // timestamp
+        calendar.setTimeInMillis(record.getMillis());
+        Utils.encodeForLogs(calendar, builder);
+        builder.append(']');
+        builder.append(' ');
+        // severity
+        builder.append(record.getLevel().getLocalizedName());
+        builder.append(" - ");
+        // class
+        if (record.getSourceClassName() != null) {
+            builder.append(record.getSourceClassName());
+            builder.append(" - ");
+        }
+        // method
+        if (record.getSourceMethodName() != null) {
+            builder.append(record.getSourceMethodName());
+            builder.append(" - ");
+        }
+        // log name
+        builder.append(record.getLoggerName());
+        // message
+        String msg = record.getMessage();
+        if ((msg != null) && (msg.length() > 0)) {
+            Object[] params = record.getParameters();
+            if (params != null) {
+                msg = String.format(msg, params);
+            }
+            builder.append(" - ");
+            builder.append(msg);
+        }
+        out.println(builder);
+        builder.setLength(0);
+        // exception
+        Throwable thrown = record.getThrown();
+        if (thrown != null) {
+            thrown.printStackTrace(out);
+        }
+    }
+
 
 }

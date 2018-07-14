@@ -2,34 +2,35 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 group 'alog'
-version '3.0.0'
+version '4.0.0'
 
 sourceCompatibility = 1.5
 targetCompatibility = 1.5
 
 repositories {
-    mavenLocal()
     mavenCentral()
 }
 
 dependencies {
-    testCompile 'ch.qos.logback:logback-classic:1.2.3'
-    testCompile 'ch.qos.logback:logback-core:1.2.3'
-    testCompile 'com.lmax:disruptor:3.2.0'
-    testCompile 'org.apache.logging.log4j:log4j-api:2.8.2'
-    testCompile 'org.apache.logging.log4j:log4j-core:2.8.2'
-    testCompile 'org.openjdk.jmh:jmh-core:1.18'
-    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:1.18'
-    testCompile 'org.slf4j:slf4j-api:1.7.25'
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:+'
 }
 
-task benchmark(type: Test) {
-    testLogging.showStandardStreams = true
-    outputs.upToDateWhen {
-        false
-    }
-    filter {
-        includeTestsMatching "com.comfortanalytics.alog.AlogBenchmark"
-    }
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.8.1'
 }
+
+task sourcesJar(type: Jar, dependsOn: classes) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+

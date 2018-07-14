@@ -1,22 +1,9 @@
-/* ISC License
- *
- * Copyright 2017 by Comfort Analytics, LLC.
- *
- * Permission to use, copy, modify, and/or distribute this software for any purpose with
- * or without fee is hereby granted, provided that the above copyright notice and this
- * permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package com.comfortanalytics.alog;
 
 import java.io.PrintStream;
+import java.util.Calendar;
+import java.util.logging.Formatter;
+import java.util.logging.LogRecord;
 
 /**
  * Async log handler for writing to streams such as System.out.
@@ -25,41 +12,54 @@ import java.io.PrintStream;
  */
 public class PrintStreamLogHandler extends AsyncLogHandler {
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Constants
-    ///////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Fields
-    ///////////////////////////////////////////////////////////////////////////
-
+    private StringBuilder builder;
+    private Calendar calendar;
     private String name;
+    private PrintStream out;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Constructors
-    ///////////////////////////////////////////////////////////////////////////
-
-    public PrintStreamLogHandler(String name, PrintStream out) {
-        this.name = name;
-        setOut(out);
+    public PrintStreamLogHandler() {
+        this.name = "Async Log Handler";
+        configure();
+        this.out = out;
         start();
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Methods
-    ///////////////////////////////////////////////////////////////////////////
+    public PrintStreamLogHandler(String name, PrintStream out) {
+        this.name = name;
+        configure();
+        this.out = out;
+        start();
+    }
 
     @Override
-    public String getThreadName() {
+    public void close() {
+        super.close();
+        out = null;
+    }
+
+    @Override
+    public void flush() {
+        if (out != null) {
+            out.flush();
+        }
+    }
+
+    @Override
+    protected String getThreadName() {
         return name;
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Inner Classes
-    ///////////////////////////////////////////////////////////////////////////
+    protected void write(LogRecord record) {
+        Formatter formatter = getFormatter();
+        if (formatter != null) {
+            out.println(formatter.format(record));
+            return;
+        }
+        if (builder == null) {
+            builder = new StringBuilder();
+            calendar = Calendar.getInstance();
+        }
+        Utils.write(record, out, builder, calendar);
+    }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Initialization
-    ///////////////////////////////////////////////////////////////////////////
-
-} //class
+}

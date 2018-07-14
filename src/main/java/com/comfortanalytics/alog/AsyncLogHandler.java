@@ -1,28 +1,13 @@
-/* ISC License
- *
- * Copyright 2017 by Comfort Analytics, LLC.
- *
- * Permission to use, copy, modify, and/or distribute this software for any purpose with
- * or without fee is hereby granted, provided that the above copyright notice and this
- * permission notice appear in all copies.
- *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH REGARD
- * TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS. IN
- * NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
- * ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
 package com.comfortanalytics.alog;
 
-import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.logging.Filter;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.LogRecord;
 
 /**
@@ -32,30 +17,45 @@ import java.util.logging.LogRecord;
  */
 public abstract class AsyncLogHandler extends Handler {
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Constants
-    ///////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Fields
+    //////////////////////////////////////////////////////////////////////////
+    // Class Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private StringBuilder builder = new StringBuilder();
-    private Calendar calendar = Calendar.getInstance();
+    static final String PROPERTY_BASE = "com.comfortanalytics.alog";
+    /**
+     * The approximate file size after which a file will be zipped into a backup and a new
+     * log file will be started; 10 mb by default.
+     */
+    static int DEFAULT_BACKUP_THRESHOLD = 10 * 1000 * 1000;
+    /**
+     * The default number of backups to retain; 10 by default.
+     */
+    static int DEFAULT_MAX_BACKUPS = 10;
+    /**
+     * Max async queue size after which records will be ignored; 25K by default.
+     */
+    static int DEFAULT_MAX_QUEUE = 25000;
+    /**
+     * Percentage (0-100) of the max queue after which log records less than
+     * INFO are ignored; 90 by default.
+     */
+    static int DEFAULT_THROTTLE = 90;
+    static int EMPTY_QUEUE_TIMEOUT = 15000;
+
+    //////////////////////////////////////////////////////////////////////////
+    // Instance Fields
+    ///////////////////////////////////////////////////////////////////////////
+
+    private boolean inferCaller = false;
     private LogHandlerThread logHandlerThread;
-    private int maxQueueSize = Alog.DEFAULT_MAX_QUEUE;
+    private int maxQueueSize = DEFAULT_MAX_QUEUE;
     private boolean open = false;
-    private PrintStream out;
-    private LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
-    private int throttle = 90;
-    private int throttleThreshold = (int) (Alog.DEFAULT_MAX_QUEUE * .90);
+    private final LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
+    private int throttle = DEFAULT_THROTTLE;
+    private int throttleThreshold = (int) (DEFAULT_MAX_QUEUE * .90);
 
     ///////////////////////////////////////////////////////////////////////////
-    // Constructors
-    ///////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////
-    // Methods
+    // Public Methods
     ///////////////////////////////////////////////////////////////////////////
 
     /**
@@ -77,29 +77,24 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * Closes the PrintStream, terminates the write thread and performs houseKeeping.
+     * Does not return until the queue is drained, or 15 seconds have elapsed.
+     * <p>
+     * {@inheritDoc}
      */
     @Override
     public void close() {
-        open = false;
-        synchronized (queue) {
-            queue.notifyAll();
+        synchronized (this) {
+            if (!open) {
+                return;
+            }
+            open = false;
         }
-        houseKeeping();
-        out.close();
+        waitForEmptyQueue(false);
+        flush();
     }
 
-    @Override
-    public void flush() {
-        out.flush();
-    }
-
-    /**
-     * Ten seconds by default, this is a guideline more than anything else.  Housekeeping
-     * can be called sooner during low activity periods.
-     */
-    public long getHouseKeepingIntervalNanos() {
-        return Time.NANOS_IN_10SEC;
+    public boolean getInferCaller() {
+        return inferCaller;
     }
 
     public int getMaxQueueSize() {
@@ -115,65 +110,44 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * The sink for formatted messages.
-     */
-    protected PrintStream getOut() {
-        return out;
-    }
-
-    /**
-     * Used to name the thread that processes log records.
-     */
-    protected abstract String getThreadName();
-
-    /**
-     * Subclass hook for activities such as rolling files and cleaning up old garbage.
-     * Called during periods of inactivity or after the houseKeepingInterval is
-     * exceeded. Does nothing by default and flush will be called just prior to this.
-     */
-    protected void houseKeeping() {
-    }
-
-    /**
      * Enqueues the record for the write thread.
      */
     @Override
     public void publish(LogRecord record) {
-        if (open) {
-            if (maxQueueSize > 0) {
-                int size = queue.size();
-                if (size >= throttleThreshold) {
-                    if (size < maxQueueSize) {
-                        if (record.getLevel().intValue() < Level.INFO.intValue()) {
-                            return;
-                        }
-                    } else {
+        synchronized (this) {
+            if (!open) {
+                return;
+            }
+        }
+        if (maxQueueSize > 0) {
+            int size = queue.size();
+            if (size >= throttleThreshold) {
+                if (size < maxQueueSize) {
+                    if (record.getLevel().intValue() < Level.INFO.intValue()) {
                         return;
                     }
+                } else {
+                    return;
                 }
             }
-            Object[] params = record.getParameters();
-            if ((params != null) && (params.length > 0)) {
-                String msg = record.getMessage();
-                if ((msg != null) && (msg.length() > 0)) {
-                    Object param;
-                    for (int i = params.length; --i >= 0; ) {
-                        param = params[i];
-                        if (param instanceof String) {
-                            continue;
-                        } else if (param instanceof Integer) {
-                            continue;
-                        } else if (param instanceof Boolean) {
-                            continue;
-                        } else if (param instanceof Byte) {
-                            continue;
-                        } else if (param instanceof Character) {
-                            continue;
-                        } else if (param instanceof Date) {
+        }
+        if (inferCaller) {
+            record.getSourceClassName();
+            record.getSourceMethodName();
+        }
+        Object[] params = record.getParameters();
+        if ((params != null) && (params.length > 0)) {
+            String msg = record.getMessage();
+            if ((msg != null) && (msg.length() > 0)) {
+                Object param;
+                for (int i = params.length; --i >= 0; ) {
+                    param = params[i];
+                    if (param instanceof String) {
+                        continue;
+                    } else if (param instanceof Number) {
+                        if (param instanceof Integer) {
                             continue;
                         } else if (param instanceof Double) {
-                            continue;
-                        } else if (param instanceof Enum) {
                             continue;
                         } else if (param instanceof Float) {
                             continue;
@@ -181,28 +155,44 @@ public abstract class AsyncLogHandler extends Handler {
                             continue;
                         } else if (param instanceof Short) {
                             continue;
-                        } else if (param instanceof Calendar) {
-                            params[i] = ((Calendar) param).clone();
-                        } else if (param instanceof Number) {
-                            Formatter formatter = getFormatter();
-                            if (formatter != null) {
-                                record.setMessage(formatter.formatMessage(record));
-                            } else {
-                                record.setMessage(String.format(msg, params));
-                            }
-                            record.setParameters(null);
-                            break;
-                        } else {
-                            params[i] = param.toString();
+                        } else if (param instanceof Byte) {
+                            continue;
                         }
+                        Formatter formatter = getFormatter();
+                        if (formatter != null) {
+                            record.setMessage(formatter.formatMessage(record));
+                        } else {
+                            record.setMessage(String.format(msg, params));
+                        }
+                        record.setParameters(null);
+                        break;
+                    } else if (param instanceof Boolean) {
+                        continue;
+                    } else if (param instanceof Character) {
+                        continue;
+                    } else if (param instanceof Date) {
+                        continue;
+                    } else if (param instanceof Enum) {
+                        continue;
+                    } else if (param instanceof Calendar) {
+                        params[i] = ((Calendar) param).clone();
+                    } else {
+                        params[i] = param.toString();
                     }
                 }
             }
-            synchronized (queue) {
-                queue.addLast(record);
-                queue.notify();
-            }
         }
+        synchronized (queue) {
+            if (open) {
+                queue.addLast(record);
+            }
+            queue.notifyAll();
+        }
+    }
+
+    public AsyncLogHandler setInferCaller(boolean fill) {
+        inferCaller = fill;
+        return this;
     }
 
     /**
@@ -211,7 +201,7 @@ public abstract class AsyncLogHandler extends Handler {
      */
     public AsyncLogHandler setMaxQueueSize(int maxQueueSize) {
         this.maxQueueSize = maxQueueSize;
-        this.throttleThreshold = maxQueueSize * (throttle / 100);
+        this.throttleThreshold = (int) (maxQueueSize * (throttle / 100d));
         return this;
     }
 
@@ -223,16 +213,49 @@ public abstract class AsyncLogHandler extends Handler {
      */
     public AsyncLogHandler setThrottle(int percent) {
         this.throttle = percent;
-        this.throttleThreshold = maxQueueSize * (throttle / 100);
+        this.throttleThreshold = (int) (maxQueueSize * (throttle / 100d));
         return this;
     }
 
+    ///////////////////////////////////////////////////////////////////////////
+    // Protected Methods
+    ///////////////////////////////////////////////////////////////////////////
+
     /**
-     * Sets the sink for formatted messages.
+     * Load configuration from LogManager.
      */
-    protected AsyncLogHandler setOut(PrintStream out) {
-        this.out = out;
-        return this;
+    protected void configure() {
+        LogManager manager = LogManager.getLogManager();
+        String prop = manager.getProperty(PROPERTY_BASE + ".filter");
+        Filter filter = optFilter(prop, null);
+        if (filter != null) {
+            setFilter(filter);
+        }
+        prop = manager.getProperty(PROPERTY_BASE + ".formatter");
+        Formatter formatter = optFormatter(prop, null);
+        if (formatter != null) {
+            setFormatter(formatter);
+        }
+        prop = manager.getProperty(PROPERTY_BASE + ".inferCaller");
+        setInferCaller(optBoolean(prop, false));
+        prop = manager.getProperty(PROPERTY_BASE + ".level");
+        setLevel(optLevel(prop, Level.INFO));
+        prop = manager.getProperty(PROPERTY_BASE + ".maxQueue");
+        setMaxQueueSize(optInt(prop, DEFAULT_MAX_QUEUE));
+        prop = manager.getProperty(PROPERTY_BASE + ".throttle");
+        setThrottle(optInt(prop, DEFAULT_THROTTLE));
+    }
+
+    /**
+     * Used to name the thread that processes log records.
+     */
+    protected abstract String getThreadName();
+
+    /**
+     * Subclass hook for activities such as rolling files and cleaning up old garbage. Called
+     * after every record is written. Does nothing by default.
+     */
+    protected void houseKeeping() {
     }
 
     /**
@@ -240,7 +263,10 @@ public abstract class AsyncLogHandler extends Handler {
      * thread if there isn't already an active write thread.
      */
     protected void start() {
-        if (logHandlerThread == null) {
+        synchronized (this) {
+            if (open) {
+                return;
+            }
             open = true;
             logHandlerThread = new LogHandlerThread();
             logHandlerThread.start();
@@ -248,49 +274,87 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * Formats and writes the log record the underlying stream.
+     * Format and write the log record the underlying stream.
      */
-    protected void write(LogRecord record) {
-        Formatter formatter = getFormatter();
-        if (formatter != null) {
-            out.println(formatter.format(record));
-            return;
-        }
-        // log name
-        builder.append(record.getLoggerName());
-        builder.append(" [");
-        // timestamp
-        calendar.setTimeInMillis(record.getMillis());
-        Time.encodeForLogs(calendar, builder);
-        builder.append("] ");
-        // severity
-        builder.append(record.getLevel().getLocalizedName());
-        // class
-        if (record.getSourceClassName() != null) {
-            builder.append(' ');
-            builder.append(record.getSourceClassName());
-        }
-        // method
-        if (record.getSourceMethodName() != null) {
-            builder.append(' ');
-            builder.append(record.getSourceMethodName());
-        }
-        // message
-        String msg = record.getMessage();
-        if ((msg != null) && (msg.length() > 0)) {
-            Object[] params = record.getParameters();
-            if (params != null) {
-                msg = String.format(msg, params);
+    protected abstract void write(LogRecord record);
+
+    ///////////////////////////////////////////////////////////////////////////
+    // Package / Private Methods
+    ///////////////////////////////////////////////////////////////////////////
+
+    static boolean optBoolean(String val, boolean defaultValue) {
+        if (val != null) {
+            try {
+                return Boolean.parseBoolean(val);
+            } catch (Exception ignore) {
             }
-            builder.append(' ');
-            builder.append(msg);
         }
-        out.println(builder.toString());
-        builder.setLength(0);
-        // exception
-        Throwable thrown = record.getThrown();
-        if (thrown != null) {
-            thrown.printStackTrace(out);
+        return defaultValue;
+    }
+
+    static Filter optFilter(String val, Filter defaultValue) {
+        if (val != null) {
+            try {
+                Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(val);
+                return (Filter) clz.newInstance();
+            } catch (Exception ignore) {
+            }
+        }
+        return defaultValue;
+    }
+
+    static Formatter optFormatter(String val, Formatter defaultValue) {
+        try {
+            if (val != null) {
+                Class<?> clz = ClassLoader.getSystemClassLoader().loadClass(val);
+                return (Formatter) clz.newInstance();
+            }
+        } catch (Exception ignore) {
+        }
+        return defaultValue;
+    }
+
+    static int optInt(String val, int defaultValue) {
+        if (val != null) {
+            try {
+                return Integer.parseInt(val);
+            } catch (Exception ignore) {
+            }
+        }
+        return defaultValue;
+    }
+
+    static Level optLevel(String val, Level defaultValue) {
+        if (val == null) {
+            return defaultValue;
+        }
+        Level l = Level.parse(val.trim());
+        return l != null ? l : defaultValue;
+    }
+
+    static String optString(String val, String defaultValue) {
+        if (val == null) {
+            return defaultValue;
+        }
+        return val;
+    }
+
+    void waitForEmptyQueue(boolean throwException) {
+        long start = System.currentTimeMillis();
+        synchronized (queue) {
+            while (!queue.isEmpty()) {
+                if ((System.currentTimeMillis() - start) > EMPTY_QUEUE_TIMEOUT) {
+                    if (throwException) {
+                        throw new IllegalStateException("Timed out waiting for empty queue");
+                    }
+                    return;
+                }
+                queue.notifyAll();
+                try {
+                    queue.wait(100);
+                } catch (Exception ignore) {
+                }
+            }
         }
     }
 
@@ -306,54 +370,32 @@ public abstract class AsyncLogHandler extends Handler {
         }
 
         public void run() {
-            long lastHouseKeeping = System.nanoTime();
-            long now;
-            LogRecord record;
-            boolean emptyQueue;
-            while (open) {
-                record = null;
+            LogRecord record = null;
+            while (true) {
                 synchronized (queue) {
-                    emptyQueue = queue.isEmpty();
-                    if (emptyQueue) {
-                        try {
-                            queue.wait(2000);
-                        } catch (Exception ignore) {
+                    if (queue.isEmpty()) {
+                        queue.notifyAll();
+                        if (open) {
+                            try {
+                                queue.wait(1000);
+                            } catch (Exception ignore) {
+                            }
+                            queue.notifyAll();
+                        } else {
+                            logHandlerThread = null;
+                            return;
                         }
-                        emptyQueue = queue.isEmpty(); //housekeeping opportunity flag
                     } else {
                         record = queue.removeFirst();
                     }
                 }
-                if (open) {
-                    if (record != null) {
-                        write(record);
-                        Thread.yield();
-                    }
-                    if (emptyQueue) {
-                        //housekeeping opportunity
-                        now = System.nanoTime();
-                        long min = getHouseKeepingIntervalNanos() / 2;
-                        if ((now - lastHouseKeeping) > min) {
-                            flush();
-                            houseKeeping();
-                            lastHouseKeeping = System.nanoTime();
-                        }
-                    } else {
-                        now = System.nanoTime();
-                        if ((now - lastHouseKeeping) > getHouseKeepingIntervalNanos()) {
-                            flush();
-                            houseKeeping();
-                            lastHouseKeeping = System.nanoTime();
-                        }
-                    }
+                if (record != null) {
+                    write(record);
+                    record = null;
+                    houseKeeping();
                 }
             }
-            logHandlerThread = null;
         }
     }
 
-    ///////////////////////////////////////////////////////////////////////////
-    // Initialization
-    ///////////////////////////////////////////////////////////////////////////
-
-} //class
+}
