@@ -5,7 +5,7 @@ Alog
 * JDK 1.5+
 * [ISC License](https://en.wikipedia.org/wiki/ISC_license)
 * [Javadoc](https://a-hansen.github.io/alog/)
-* [![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog)
+* [![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog/+)
 
 Overview
 --------
