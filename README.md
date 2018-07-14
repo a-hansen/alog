@@ -1,5 +1,3 @@
-[![Release](https://jitpack.io/v3.0.0/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog)
-
 Alog
 ====
 
@@ -7,7 +5,7 @@ Alog
 * JDK 1.5+
 * [ISC License](https://en.wikipedia.org/wiki/ISC_license)
 * [Javadoc](https://a-hansen.github.io/alog/)
-
+* [![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog)
 
 Overview
 --------
@@ -24,8 +22,10 @@ number of zip backups will be trimmed to a configurable maximum.
 There are two ways to use Alog: programmatically and with configuration
 files.
 
-Programmatic Usage
-------------------
+Adding the Dependency
+---------------------
+
+To add alog as a dependency in your build, [follow this link](https://jitpack.io/#a-hansen/alog).
 
 Programmatic Usage
 ------------------
