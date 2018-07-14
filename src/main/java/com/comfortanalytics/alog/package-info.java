@@ -59,33 +59,33 @@
 
  The following keys can be used with both:
  <ul>
- <li>com.comfortanalytics.alog.filter</li> is the name of a Filter class to use
+ <li>com.comfortanalytics.alog.filter - is the name of a Filter class to use
  (defaults to no Filter).
- <li>com.comfortanalytics.alog.formatter</li> is the name of a Formatter class
+ <li>com.comfortanalytics.alog.formatter - is the name of a Formatter class
  to use (defaults to null and uses an optimized Alog format) .
- <li>com.comfortanalytics.alog.inferCaller</li> is a boolean that
+ <li>com.comfortanalytics.alog.inferCaller - is a boolean that
  determines whether or not to infer the source class and method name
  before submitting the log record for async processing (expensive, so
  the default is false).
- <li>com.comfortanalytics.alog.level</li> is the default level for the Handler
+ <li>com.comfortanalytics.alog.level - is the default level for the Handler
  (defaults to INFO).
- <li>com.comfortanalytics.alog.maxQueue</li> is the max async queue size above
+ <li>com.comfortanalytics.alog.maxQueue - is the max async queue size above
  which records are ignored (defaults to 2500, use 0 for infinite).
- <li>com.comfortanalytics.alog.throttle</li> is the percentage (0-100) of the
+ <li>com.comfortanalytics.alog.throttle - is the percentage (0-100) of the
  maxQueue after which log records less than INFO are ignored (defaults to
  90%). A value of 100 effectively disables the throttle.
  </ul>
 
  The following keys can also be used with the FileLogHandler:
  <ul>
- <li>com.comfortanalytics.alog.backupThreshold</li> is the approximate file
+ <li>com.comfortanalytics.alog.backupThreshold - is the approximate file
  size in bytes to zip up the log file and store it with a timestamp
  appended to the file name (default is 10000000 bytes).
- <li>com.comfortanalytics.alog.encoding</li> is the charset for encoding log
+ <li>com.comfortanalytics.alog.encoding - is the charset for encoding log
  files (default is "UTF-8").
- <li>com.comfortanalytics.alog.filename</li> is the pattern for generating the
+ <li>com.comfortanalytics.alog.filename - is the pattern for generating the
  output file name. See below for details. (default is "java.log").
- <li>com.comfortanalytics.alog.maxBackups</li> is the number of zip backups to
+ <li>com.comfortanalytics.alog.maxBackups - is the number of zip backups to
  maintain (default is 10).
  </ul>
  The filename pattern uses the following tokens:
@@ -116,10 +116,6 @@
  com.comfortanalytics.alog.maxQueue=5000
  com.comfortanalytics.alog.throttle=95
  </pre>
-
-
- @author Aaron Hansen
-
  */
 package com.comfortanalytics.alog;
 

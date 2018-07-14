@@ -36,7 +36,7 @@ public class Alog {
     /**
      * Returns the first AsyncLogHandler found for the given log, or null.
      */
-    public static AsyncLogHandler getHandler(Logger logger) {
+    public static AsyncLogHandler getAsyncHandler(Logger logger) {
         for (Handler h : logger.getHandlers()) {
             if (h instanceof AsyncLogHandler) {
                 return (AsyncLogHandler) h;
@@ -141,7 +141,7 @@ public class Alog {
     /**
      * A convenience for Logger.getLogger("").
      */
-    public static Logger rootLogger() {
+    static Logger rootLogger() {
         return Logger.getLogger("");
     }
 

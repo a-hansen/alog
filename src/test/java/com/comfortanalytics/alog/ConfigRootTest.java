@@ -42,7 +42,7 @@ public class ConfigRootTest {
         LogManager mgr = LogManager.getLogManager();
         mgr.readConfiguration(new ByteArrayInputStream(config.getBytes("UTF-8")));
         Logger log = Alog.rootLogger();
-        AsyncLogHandler handler = Alog.getHandler(log);
+        AsyncLogHandler handler = Alog.getAsyncHandler(log);
         Assert.assertTrue(handler.getLevel() == Level.CONFIG);
         Assert.assertTrue(handler.getMaxQueueSize() == 50000);
         Assert.assertTrue(handler.getFormatter() instanceof SimpleFormatter);
