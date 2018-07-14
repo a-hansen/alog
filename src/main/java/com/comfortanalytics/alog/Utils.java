@@ -1,8 +1,10 @@
 package com.comfortanalytics.alog;
 
+import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
 /**
@@ -201,5 +203,55 @@ class Utils {
             }
         }
     }
+
+
+    /**
+     * Formats and writes the log record the underlying stream.
+     */
+    static void write(LogRecord record, PrintStream out, StringBuilder builder, Calendar calendar) {
+        if (builder == null) {
+            builder = new StringBuilder();
+            calendar = Calendar.getInstance();
+        }
+        builder.append('[');
+        // timestamp
+        calendar.setTimeInMillis(record.getMillis());
+        Utils.encodeForLogs(calendar, builder);
+        builder.append(']');
+        builder.append(' ');
+        // severity
+        builder.append(record.getLevel().getLocalizedName());
+        builder.append(" - ");
+        // class
+        if (record.getSourceClassName() != null) {
+            builder.append(record.getSourceClassName());
+            builder.append(" - ");
+        }
+        // method
+        if (record.getSourceMethodName() != null) {
+            builder.append(record.getSourceMethodName());
+            builder.append(" - ");
+        }
+        // log name
+        builder.append(record.getLoggerName());
+        // message
+        String msg = record.getMessage();
+        if ((msg != null) && (msg.length() > 0)) {
+            Object[] params = record.getParameters();
+            if (params != null) {
+                msg = String.format(msg, params);
+            }
+            builder.append(" - ");
+            builder.append(msg);
+        }
+        out.println(builder);
+        builder.setLength(0);
+        // exception
+        Throwable thrown = record.getThrown();
+        if (thrown != null) {
+            thrown.printStackTrace(out);
+        }
+    }
+
 
 }

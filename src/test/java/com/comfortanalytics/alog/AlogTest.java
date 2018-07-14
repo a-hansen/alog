@@ -32,14 +32,13 @@ public class AlogTest {
         Logger log = Alog.getLogger(getClass(), file);
         FileLogHandler handler = FileLogHandler.getHandler(file);
         Assert.assertEquals(log.getHandlers()[0], handler);
-        Alog.replaceRootHandler(file);
         log = Alog.rootLogger();
-        Assert.assertEquals(log.getHandlers()[0], handler);
         Alog.replaceRootHandler();
         Assert.assertTrue(log.getHandlers()[0] instanceof PrintStreamLogHandler);
+        Alog.addToRootLogger(file);
+        Assert.assertEquals(log.getHandlers()[1], handler);
 
         log = Alog.getLogger(getClass());
-        Alog.getHandler(log).setInferCaller(true);
         log.log(Level.INFO, "Just for viewing the format", new Exception());
         try {
             Thread.sleep(50);

@@ -13,29 +13,7 @@ repositories {
 }
 
 dependencies {
-    testCompile 'ch.qos.logback:logback-classic:+'
-    testCompile 'ch.qos.logback:logback-core:+'
-    testCompile 'com.lmax:disruptor:+'
-    testCompile 'org.apache.logging.log4j:log4j-api:+'
-    testCompile 'org.apache.logging.log4j:log4j-core:+'
-    testCompile 'org.openjdk.jmh:jmh-core:+'
-    testCompile 'org.openjdk.jmh:jmh-generator-annprocess:+'
-    testCompile 'org.slf4j:slf4j-api:+'
     testCompile 'junit:junit:+'
-}
-
-test {
-    exclude '**/*Benchmark*'
-}
-
-task benchmark(type: Test) {
-    testLogging.showStandardStreams = true
-    outputs.upToDateWhen {
-        false
-    }
-    filter {
-        includeTestsMatching "com.comfortanalytics.alog.AlogBenchmark"
-    }
 }
 
 task wrapper(type: Wrapper) {

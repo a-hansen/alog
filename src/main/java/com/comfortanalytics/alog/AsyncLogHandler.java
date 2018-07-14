@@ -1,6 +1,5 @@
 package com.comfortanalytics.alog;
 
-import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
@@ -35,7 +34,7 @@ public abstract class AsyncLogHandler extends Handler {
     /**
      * Max async queue size after which records will be ignored; 25K by default.
      */
-    static int DEFAULT_MAX_QUEUE = 25000;
+    static int DEFAULT_MAX_QUEUE = 2500;
     /**
      * Percentage (0-100) of the max queue after which log records less than
      * INFO are ignored; 90 by default.
@@ -47,14 +46,11 @@ public abstract class AsyncLogHandler extends Handler {
     // Instance Fields
     ///////////////////////////////////////////////////////////////////////////
 
-    private StringBuilder builder;
-    private Calendar calendar;
     private boolean inferCaller = false;
     private LogHandlerThread logHandlerThread;
     private int maxQueueSize = DEFAULT_MAX_QUEUE;
     private boolean open = false;
-    protected PrintStream out;
-    private LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
+    private final LinkedList<LogRecord> queue = new LinkedList<LogRecord>();
     private int throttle = DEFAULT_THROTTLE;
     private int throttleThreshold = (int) (DEFAULT_MAX_QUEUE * .90);
 
@@ -81,8 +77,9 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * Does not return until the queue is drained, or 15 seconds have elapsed.  Flushes, does
-     * not close the stream.
+     * Does not return until the queue is drained, or 15 seconds have elapsed.
+     * <p>
+     * {@inheritDoc}
      */
     @Override
     public void close() {
@@ -94,13 +91,6 @@ public abstract class AsyncLogHandler extends Handler {
         }
         waitForEmptyQueue(false);
         flush();
-    }
-
-    @Override
-    public void flush() {
-        if (out != null) {
-            out.flush();
-        }
     }
 
     public boolean getInferCaller() {
@@ -256,13 +246,6 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * The sink for formatted messages.
-     */
-    protected PrintStream getOut() {
-        return out;
-    }
-
-    /**
      * Used to name the thread that processes log records.
      */
     protected abstract String getThreadName();
@@ -272,14 +255,6 @@ public abstract class AsyncLogHandler extends Handler {
      * after every record is written. Does nothing by default.
      */
     protected void houseKeeping() {
-    }
-
-    /**
-     * Sets the sink for formatted messages.
-     */
-    protected AsyncLogHandler setOut(PrintStream out) {
-        this.out = out;
-        return this;
     }
 
     /**
@@ -298,57 +273,9 @@ public abstract class AsyncLogHandler extends Handler {
     }
 
     /**
-     * Formats and writes the log record the underlying stream.
+     * Format and write the log record the underlying stream.
      */
-    protected void write(LogRecord record) {
-        Formatter formatter = getFormatter();
-        if (formatter != null) {
-            out.println(formatter.format(record));
-            return;
-        }
-        if (builder == null) {
-            builder = new StringBuilder();
-            calendar = Calendar.getInstance();
-        }
-        builder.append('[');
-        // timestamp
-        calendar.setTimeInMillis(record.getMillis());
-        Utils.encodeForLogs(calendar, builder);
-        builder.append(']');
-        builder.append(' ');
-        // severity
-        builder.append(record.getLevel().getLocalizedName());
-        builder.append(" - ");
-        // class
-        if (record.getSourceClassName() != null) {
-            builder.append(record.getSourceClassName());
-            builder.append(" - ");
-        }
-        // method
-        if (record.getSourceMethodName() != null) {
-            builder.append(record.getSourceMethodName());
-            builder.append(" - ");
-        }
-        // log name
-        builder.append(record.getLoggerName());
-        // message
-        String msg = record.getMessage();
-        if ((msg != null) && (msg.length() > 0)) {
-            Object[] params = record.getParameters();
-            if (params != null) {
-                msg = String.format(msg, params);
-            }
-            builder.append(" - ");
-            builder.append(msg);
-        }
-        out.println(builder);
-        builder.setLength(0);
-        // exception
-        Throwable thrown = record.getThrown();
-        if (thrown != null) {
-            thrown.printStackTrace(out);
-        }
-    }
+    protected abstract void write(LogRecord record);
 
     ///////////////////////////////////////////////////////////////////////////
     // Package / Private Methods
@@ -455,7 +382,6 @@ public abstract class AsyncLogHandler extends Handler {
                             queue.notifyAll();
                         } else {
                             logHandlerThread = null;
-                            out = null;
                             return;
                         }
                     } else {

@@ -2,6 +2,7 @@ package com.comfortanalytics.alog;
 
 import java.io.File;
 import java.io.PrintStream;
+import java.util.logging.ConsoleHandler;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
@@ -27,7 +28,6 @@ public class Alog {
      * Adds a FileLogHandler to the root logger, if there isn't one for the same file already.
      *
      * @param logFile Where record the log.  Multiple logs can safely share the same file.
-     * @return The logger for the given name with an async file handler attached to it.
      */
     public static void addToRootLogger(File logFile) {
         getLogger("", logFile);
@@ -120,34 +120,22 @@ public class Alog {
     }
 
     /**
-     * Removes existing handlers from the root logger and installs a
+     * Removes the default console from the root logger and installs a
      * PrintStreamLogHandler for System.out.
      */
     public static void replaceRootHandler() {
         Logger root = rootLogger();
+        boolean existing = false;
         for (Handler handler : root.getHandlers()) {
-            if (handler instanceof FileLogHandler) {
-                handler.close();
+            if (handler instanceof ConsoleHandler) {
+                root.removeHandler(handler);
+            } else if (handler instanceof PrintStreamLogHandler) {
+                existing = true;
             }
-            root.removeHandler(handler);
         }
-        root.addHandler(new PrintStreamLogHandler("Async Root Logger", System.out));
-    }
-
-    /**
-     * Removes existing handlers from the root logger and installs a
-     * FileLogHandler.
-     */
-    public static void replaceRootHandler(File logFile) {
-        Logger root = rootLogger();
-        for (Handler handler : root.getHandlers()) {
-            if (handler instanceof FileLogHandler) {
-                handler.close();
-            }
-            root.removeHandler(handler);
+        if (!existing) {
+            root.addHandler(new PrintStreamLogHandler("Async Console Logger", System.out));
         }
-        FileLogHandler fileLogHandler = FileLogHandler.getHandler(logFile);
-        root.addHandler(fileLogHandler);
     }
 
     /**

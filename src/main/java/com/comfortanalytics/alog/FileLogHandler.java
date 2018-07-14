@@ -12,8 +12,10 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Formatter;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
+import java.util.logging.LogRecord;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -31,10 +33,13 @@ public class FileLogHandler extends AsyncLogHandler {
 
     private static Map<String, FileLogHandler> allHandlers = new HashMap<String, FileLogHandler>();
     private int backupThreshold = DEFAULT_BACKUP_THRESHOLD;
+    private StringBuilder builder;
+    private Calendar calendar;
     private File file;
     private FileOutputStream fileOut;
     private long length;
     private int maxBackups = DEFAULT_MAX_BACKUPS;
+    private PrintStream out;
 
     ///////////////////////////////////////////////////////////////////////////
     // Constructors
@@ -71,12 +76,20 @@ public class FileLogHandler extends AsyncLogHandler {
             if (fileOut != null) {
                 fileOut.close();
                 fileOut = null;
+                out = null;
             }
         } catch (IOException x) {
             AlogException.throwRuntime(x);
         }
         synchronized (FileLogHandler.class) {
             allHandlers.remove(file.getAbsolutePath());
+        }
+    }
+
+    @Override
+    public void flush() {
+        if (out != null) {
+            out.flush();
         }
     }
 
@@ -172,6 +185,19 @@ public class FileLogHandler extends AsyncLogHandler {
     ///////////////////////////////////////////////////////////////////////////
     // Package / Private Methods
     ///////////////////////////////////////////////////////////////////////////
+
+    protected void write(LogRecord record) {
+        Formatter formatter = getFormatter();
+        if (formatter != null) {
+            out.println(formatter.format(record));
+            return;
+        }
+        if (builder == null) {
+            builder = new StringBuilder();
+            calendar = Calendar.getInstance();
+        }
+        Utils.write(record, out, builder, calendar);
+    }
 
     /**
      * Backup files for this log, found in the same directory as the active log.
@@ -320,7 +346,7 @@ public class FileLogHandler extends AsyncLogHandler {
             }
             fileOut = new FileOutputStream(file, true);
             OutputStream tmp = new MeterStream(new BufferedOutputStream(fileOut));
-            setOut(new PrintStream(tmp, false, getEncoding()));
+            out = new PrintStream(tmp, false, getEncoding());
         } catch (Exception x) {
             AlogException.throwRuntime(x);
         }
