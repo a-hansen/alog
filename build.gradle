@@ -15,7 +15,6 @@ def issuesUrl = 'https://github.com/a-hansen/alog/issues'
 def githubRepo = 'a-hansen/alog'
 def developerId = 'a-hansen'
 def developerName = 'Aaron Hansen'
-def developerEmail = 'aaron4code@gmail.com'
 def developerOrg = 'Comfort Analytics'
 def developerOrgUrl = 'http://comfortanalytics.com'
 
@@ -100,7 +99,7 @@ def pomConfig = {
         developer {
             id developerId
             name developerName
-            email developerEmail
+            email project.properties.developerEmail
             organization developerOrg
             organizationUrl developerOrgUrl
         }
