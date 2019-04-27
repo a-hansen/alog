@@ -18,6 +18,13 @@ number of zip backups will be trimmed to a configurable maximum.
 There are two ways to use Alog: programmatically and with configuration
 files.
 
+Dependency Management
+---------------------
+
+**Repository** : JCenter
+**groupId** : com.comfortanalytics
+**artifactId** : alog
+
 Programmatic Usage
 ------------------
 

@@ -6,10 +6,10 @@ import java.util.logging.Level;
 import java.util.logging.LogManager;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.testng.Assert;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.Test;
 
 /**
  * @author Aaron Hansen
@@ -26,12 +26,12 @@ public class ConfigFileTest {
             "com.comfortanalytics.alog.inferCaller=true\n" +
             "com.comfortanalytics.alog.backupThreshold=100\n";
 
-    @Before
+    @BeforeClass
     public void setup() {
         LogManager.getLogManager().reset();
     }
 
-    @After
+    @AfterClass
     public void teardown() {
         LogManager.getLogManager().reset();
     }

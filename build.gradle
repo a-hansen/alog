@@ -1,36 +1,133 @@
-apply plugin: 'java'
-apply plugin: 'maven'
+plugins {
+    id 'java-library'
+    id 'com.jfrog.bintray' version '1.8.4'
+    id 'maven-publish'
+}
 
-group 'alog'
-version '4.0.1'
+version '4.1.0'
+group 'com.comfortanalytics'
+description 'Async Java Util Logging'
 
-sourceCompatibility = 1.5
-targetCompatibility = 1.5
+def projectUrl = 'https://github.com/a-hansen/alog'
+def vcsUrl = 'https://github.com/a-hansen/alog.git'
+def scmUrl = 'scm:https://github.com/a-hansen/alog.git'
+def issuesUrl = 'https://github.com/a-hansen/alog/issues'
+def githubRepo = 'a-hansen/alog'
+def developerId = 'a-hansen'
+def developerName = 'Aaron Hansen'
+def developerEmail = 'contact@comfortanalytics.com'
+def developerOrg = 'Comfort Analytics'
+def developerOrgUrl = 'http://comfortanalytics.com'
+
+sourceCompatibility = JavaVersion.VERSION_1_5
+targetCompatibility = JavaVersion.VERSION_1_5
 
 repositories {
-    mavenCentral()
+    jcenter()
 }
 
 dependencies {
-    testImplementation 'junit:junit:+'
+    testImplementation 'org.testng:testng:6.14.3'
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '4.8.1'
+test {
+    useTestNG()
 }
 
 task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier.set('sources')
     from sourceSets.main.allSource
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier.set('javadoc')
     from javadoc.destinationDir
 }
 
 artifacts {
-    archives sourcesJar
-    archives javadocJar
+    archives sourcesJar, javadocJar
+}
+
+wrapper {
+    gradleVersion = '5.4'
+}
+
+// Jcenter
+// -------
+
+bintray {
+    user = project.properties.bintrayUser
+    key = project.properties.bintrayApiKey
+    publications = ['MyPublication']
+    dryRun = false
+    publish = true
+    override = true
+    pkg {
+        repo = project.group
+        name = project.name
+        licenses = ['ISC']
+        desc = project.description
+        vcsUrl = vcsUrl
+        websiteUrl = projectUrl
+        issueTrackerUrl = issuesUrl
+        githubRepo = githubRepo
+        githubReleaseNotesFile = 'README.md'
+        version {
+            name = project.version
+            desc = project.description
+            released  = new Date()
+            vcsTag = project.version
+            mavenCentralSync {
+                sync = false //[Default: true] Determines whether to sync the version to Maven Central.
+                user = project.properties.ossrhUser
+                password = project.properties.ossrhPass
+            }
+        }
+    }
+    publications = ['MyPublication']
+}
+
+// Create the pom configuration:
+def pomConfig = {
+    licenses {
+        license {
+            name 'ISC License'
+            url 'http://opensource.org/licenses/ISC'
+            distribution 'repo'
+        }
+    }
+    developers {
+        developer {
+            id developerId
+            name developerName
+            email developerEmail
+            organization developerOrg
+            organizationUrl developerOrgUrl
+        }
+    }
+    scm {
+        url scmUrl
+    }
+}
+
+// Create the publication with the pom configuration:
+publishing {
+    publications {
+        MyPublication(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            groupId project.group
+            artifactId project.name
+            version project.version
+            pom.withXml {
+                def root = asNode()
+                root.appendNode('description', project.description)
+                root.appendNode('name', project.name)
+                root.appendNode('url', projectUrl)
+                root.children().last() + pomConfig
+            }
+        }
+    }
 }
 
