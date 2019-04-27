@@ -2,7 +2,7 @@ Alog
 ====
 [![](https://jitpack.io/v/a-hansen/alog.svg)](https://jitpack.io/#a-hansen/alog)
 * JDK 1.5+
-* [Javadoc](https://jitpack.io/com/github/a-hansen/alog/v4.0.0/javadoc/)
+* [Javadoc](https://jitpack.io/com/github/a-hansen/alog/master-SNAPSHOT/javadoc/)
 
 Overview
 --------
@@ -21,9 +21,9 @@ files.
 Dependency Management
 ---------------------
 
-**Repository** : JCenter
-**groupId** : com.comfortanalytics
-**artifactId** : alog
+- **Repository** : JCenter
+- **groupId** : com.comfortanalytics
+- **artifactId** : alog
 
 Programmatic Usage
 ------------------
